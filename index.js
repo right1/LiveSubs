@@ -6,19 +6,23 @@ const videoOptions={
     video: true,
     audio: true
 }
+// import adapter from 'webrtc-adapter'
 var peerInstances={};//username: instance
 var password;
 var clientPeerId;
 var username;
 var muted=false;
 var connection;//Websocket connection to server
+// var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 $(function(){
     $('#muteSwitch_muted').hide();
-    $('#muteSwitch_unmuted').hide();
+    $('#muteSwitch_unmuted').hide();  
     navigator.mediaDevices.getUserMedia(videoOptions).then(function(stream) {
         gotMedia(stream)
       })
       .catch(function(err) {
+          //Start in spectator mode
+          startConnection(false)
         console.error(err)
       });
     window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -27,8 +31,12 @@ $(function(){
         video.srcObject = stream;
         // video.load();
         video.play();
+        startConnection(stream);
         // userInstance=new Peer({initiator: true,stream: stream})
-        connection=new WebSocket('wss://192.168.0.178:8443');
+        
+    }
+    function startConnection(stream){
+        connection=new WebSocket('wss://localhost');
         // connection.onopen=function(){
             
         // }
@@ -47,54 +55,60 @@ $(function(){
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     $('.login-ui').hide();
                     for(var i=0;i<data.usernames.length;i++){
-                        
-                        let newPeer=new Peer({stream:stream});//this peer will wait for signal before doing anything.
+                        let newPeer;
+                        if(stream){
+                            newPeer=new Peer({stream:stream});//this peer will wait for signal before doing anything.
+                        }else{
+                            newPeer=new Peer();
+                        } 
                         peerSetup(newPeer,false,data.usernames[i])
                     }
                 }else if(data.success===0){
                     $('#connectionErrorMsg').text(data.message);
                 }
             }else if(data.type==='newUser'){
-               
-                let newPeer=new Peer({stream:stream,initiator:true});
+                let newPeer;
+                if(stream){
+                    newPeer=new Peer({stream:stream,initiator:true});
+                }else{
+                    newPeer=new Peer({initiator:true});
+                }
                 peerSetup(newPeer,true,data.username)
                 
             }else if(data.type==="peerId"){
-                if(data.initiator){
-                    peerInstances[data.username]['peer'].signal(data.id);
-                }else{
-                    peerInstances[data.username]['peer'].signal(data.id);
-                }
+                peerInstances[data.username]['peer'].signal(data.id);
             }
         }
-        $('#muteSwitch_muted').click(function(){
-            muted=false;
-            $('#muteSwitch_unmuted').show();
-            $('#muteSwitch_muted').hide();
-            stream.getAudioTracks()[0].enabled = true;
-        })
-        $('#muteSwitch_unmuted').click(function(){
-            muted=true;
-            stream.getAudioTracks()[0].enabled = false;
-            $('#muteSwitch_muted').show();
-            $('#muteSwitch_unmuted').hide();
-        })
-        $('#selfContainer').mouseenter(function(){
-            if(muted){
-                $('#muteSwitch_muted').show()
-            }else{
-                $('#muteSwitch_unmuted').show()
-            }
-        })
-        $('#selfContainer').mouseleave(function(){
-            if(muted){
-                $('#muteSwitch_muted').hide(100)
-            }else{
-                $('#muteSwitch_unmuted').hide(100)
-            }
-        })
+        if(stream){
+            $('#muteSwitch_muted').click(function(){
+                muted=false;
+                $('#muteSwitch_unmuted').show();
+                $('#muteSwitch_muted').hide();
+                stream.getAudioTracks()[0].enabled = true;
+            })
+            $('#muteSwitch_unmuted').click(function(){
+                muted=true;
+                stream.getAudioTracks()[0].enabled = false;
+                $('#muteSwitch_muted').show();
+                $('#muteSwitch_unmuted').hide();
+            })
+            $('#selfContainer').mouseenter(function(){
+                if(muted){
+                    $('#muteSwitch_muted').show()
+                }else{
+                    $('#muteSwitch_unmuted').show()
+                }
+            })
+            $('#selfContainer').mouseleave(function(){
+                if(muted){
+                    $('#muteSwitch_muted').hide(100)
+                }else{
+                    $('#muteSwitch_unmuted').hide(100)
+                }
+            })
+        }
+        
     }
-    
     function peerSetup(p,init,otherUsername){
         // newPeer.signal(signalData);
         p.on('data',onDataReceived)
@@ -116,6 +130,7 @@ $(function(){
             console.log('connected')
         })
         p.on('stream',function(otherStream){
+            console.log(otherStream)
             var video=document.createElement('video');
             video.id=otherUsername+"_video";
             document.getElementById('videoBar').appendChild(video);
@@ -143,9 +158,9 @@ $(function(){
     $('#send').click(function(){
         sendToAll("bro")
     })
-    $("video").bind("ended", function() {
-        console.log('ended')
-     });
+    // $("video").bind("ended", function() {
+    //     console.log('ended')
+    //  });
     function sendToAll(data){
         //send data as string buffer shit isn't really working .stringify if necessary
         console.log(peerInstances);

@@ -81,7 +81,6 @@ function createRoom(data, connectionInstance) {
             "success": CREATED,
             "message": "created room"
         }));
-
         console.log('created ' + data.roomName);
     }
     else {
@@ -112,13 +111,12 @@ function createRoom(data, connectionInstance) {
             value.send(JSON.stringify({ "type": "newUser", "username": data.username }));
         }
         activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
-
         console.log('user joined ' + data.roomName);
     }
     connectionInstance.on('close', function (connection) {
         delete activeRooms[data.roomName]['connections'][data.username];
 
-        if (Object.keys(activeRooms[data.roomName]['connections'].length == 0)) {
+        if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {
             //deleting room after users have left
             delete activeRooms[data.roomName];
             console.log('deleted room ' + data.roomName);
