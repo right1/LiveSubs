@@ -2835,7 +2835,7 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
 var Peer=require('simple-peer');
 const buffer=require('buffer')
 // var userInstance;//simple-peer client instance
-var roomName="test";//roomname to create for testing
+var roomName;//roomname to create for testing
 const videoOptions={
     video: true,
     audio: true
@@ -2843,9 +2843,12 @@ const videoOptions={
 var peerInstances={};//username: instance
 var password;
 var clientPeerId;
-var username=Math.floor(Math.random()*1000);
+var username;
+var muted=false;
 var connection;//Websocket connection to server
 $(function(){
+    $('#muteSwitch_muted').hide();
+    $('#muteSwitch_unmuted').hide();
     navigator.mediaDevices.getUserMedia(videoOptions).then(function(stream) {
         gotMedia(stream)
       })
@@ -2860,45 +2863,31 @@ $(function(){
         video.play();
         // userInstance=new Peer({initiator: true,stream: stream})
         connection=new WebSocket('wss://localhost:8443');
-        connection.onopen=function(){
-            var datatosend=JSON.stringify({
-                "type": 'roomRequest',
-                "roomName": 'hello',
-                "password": "",
-                "username": username
-            })
-            connection.send(datatosend)
-        }
+        // connection.onopen=function(){
+            
+        // }
         
         connection.onerror=function(error){
             console.error(error)
         }
         connection.onmessage=function(message){
             var data=JSON.parse(message.data)
+            console.log(data)
             if(data.type==='roomCreation'){
                 if(data.success===2){
                     // userInstance=new Peer({initiator: true,trickle:false,stream: stream})
+                    $('.login-ui').hide();
                 }else if(data.success===1){
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
+                    $('.login-ui').hide();
                     for(var i=0;i<data.usernames.length;i++){
                         
                         let newPeer=new Peer({stream:stream});//this peer will wait for signal before doing anything.
                         peerSetup(newPeer,false,data.usernames[i])
                     }
+                }else if(data.success===0){
+                    $('#connectionErrorMsg').text(data.message);
                 }
-                // userInstance.on('signal',function(data){
-                //     clientPeerId=JSON.stringify(data);
-                //     var datatosend=JSON.stringify({
-                //         "roomName": "hello",
-                //         "password": "",
-                //         "type": "addId",
-                //         "id": clientPeerId
-                //     })
-                //     connection.send(datatosend)
-                // })
-                // userInstance.on('data',function(data){
-                //     onDataReceived(data);
-                // })
             }else if(data.type==='newUser'){
                
                 let newPeer=new Peer({stream:stream,initiator:true});
@@ -2911,12 +2900,35 @@ $(function(){
                     peerInstances[data.username]['peer'].signal(data.id);
                 }
             }
-            
-            
-            
         }
-        
+        $('#muteSwitch_muted').click(function(){
+            muted=false;
+            $('#muteSwitch_unmuted').show();
+            $('#muteSwitch_muted').hide();
+            stream.getAudioTracks()[0].enabled = true;
+        })
+        $('#muteSwitch_unmuted').click(function(){
+            muted=true;
+            stream.getAudioTracks()[0].enabled = false;
+            $('#muteSwitch_muted').show();
+            $('#muteSwitch_unmuted').hide();
+        })
+        $('#selfContainer').mouseenter(function(){
+            if(muted){
+                $('#muteSwitch_muted').show()
+            }else{
+                $('#muteSwitch_unmuted').show()
+            }
+        })
+        $('#selfContainer').mouseleave(function(){
+            if(muted){
+                $('#muteSwitch_muted').hide(100)
+            }else{
+                $('#muteSwitch_unmuted').hide(100)
+            }
+        })
     }
+    
     function peerSetup(p,init,otherUsername){
         // newPeer.signal(signalData);
         p.on('data',onDataReceived)
@@ -2930,7 +2942,8 @@ $(function(){
                 "username": username,
                 "target": otherUsername,
                 "initiator": init,
-                "roomName": "hello"
+                "roomName": roomName,
+                "password": password
             }))
         })
         p.on('connect',function(data){
@@ -2941,18 +2954,34 @@ $(function(){
             video.id=otherUsername+"_video";
             document.getElementById('videoBar').appendChild(video);
             video.srcObject=otherStream;
+            // video.onended=function(){
+            //     console.log(otherUsername+' video ended')
+            //     $('#'+otherUsername+'_video').remove();
+            // }
             video.play();
         })
         
     }
-    $('#send').click(function(){
-        // sendToAll({"data":"bro"});
-        sendToAll("bro")
-        // for(var i=0;i<peerInstances.length;i++){
-        //     peerInstances[i].send('hello '+i)
-        // }
+    $('#connect').click(function(){
+        username=$('#username').val();
+        roomName=$('#roomName').val();
+        password=$('#password').val();
+        var datatosend=JSON.stringify({
+            "type": 'roomRequest',
+            "roomName": roomName,
+            "password": password,
+            "username": username
+        })
+        connection.send(datatosend)
     })
+    $('#send').click(function(){
+        sendToAll("bro")
+    })
+    $("video").bind("ended", function() {
+        console.log('ended')
+     });
     function sendToAll(data){
+        //send data as string buffer shit isn't really working .stringify if necessary
         console.log(peerInstances);
         for(var i in peerInstances){
             var val=peerInstances[i];
@@ -2963,9 +2992,6 @@ $(function(){
         console.log(data)
         console.log(data.toString());
     }
-    // function sendTestMessage(){
-        
-    // }
 })
 
 

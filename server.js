@@ -66,17 +66,21 @@ function createRoom(data,connectionInstance){
         activeRooms[data.roomName]={
             "connections": connectionStart,
             "chat": {},
-            "password": "",
+            "password": data.password,
             "createTimeStamp": date
         }
-        connectionInstance.on('close',function(connection){
-            console.log('closed')
-            delete activeRooms[data.roomName]['connections'][data.username]
-        })
+        
         connectionInstance.send(JSON.stringify({"type":"roomCreation","success": 2,"message": "created room"}))
     } else {
         //probably check for pw here
         var usernames=Object.keys(activeRooms[data.roomName]["connections"])
+        if(activeRooms[data.roomName]['password']!==data.password){
+            connectionInstance.send(JSON.stringify({"type": "roomCreation","success":0,"message": "password incorrect","usernames": usernames}))
+            return;
+        }else if(usernames.indexOf(data.username)!=-1){
+            connectionInstance.send(JSON.stringify({"type": "roomCreation","success":0,"message": "The following usernames exist: ["+usernames.join(',')+']',"usernames": usernames}))
+            return;
+        }
         connectionInstance.send(JSON.stringify({"type": "roomCreation","success":1,"message": "added you to room","usernames": usernames}))
         // activeRooms[data.roomName]['connectionCount']++;
          //update connection instance
@@ -86,10 +90,23 @@ function createRoom(data,connectionInstance){
         activeRooms[data.roomName]['connections'][data.username]=connectionInstance;
         
     }
+    connectionInstance.on('close',function(connection){
+        console.log('closed')
+        delete activeRooms[data.roomName]['connections'][data.username]
+    })
 }
 function handlePeer(data){
+    if(data.password!==activeRooms[data.roomName]['password']){
+        activeRooms[data.roomName]['connections'][data.target].send(JSON.stringify({
+            "type": "peerId",
+            "success": 0,
+            "message": "incorrect password"
+        }))
+        return
+    }
     activeRooms[data.roomName]['connections'][data.target].send(JSON.stringify({
         "type": "peerId",
+        "success": 1,
         "initiator": data.initiator,
         "username": data.username,
         "id": data.id
