@@ -45,17 +45,15 @@ wss.on('connection', function connection(ws) {
     ws.on('message', function incoming(message) {
         receivedData(message,ws)
     });
-    ws.on('close',function(connection){
-        onDisconnect(connection);
-    })
+    
     // ws.send('something');
 })
 function receivedData(data_, connectionInstance) {
     data_=JSON.parse(data_);
     if(data_.type==="roomRequest"){
         createRoom(data_,connectionInstance)
-    }else if(data_.type==='addId'){
-        addId(data_)
+    }else if(data_.type==='peerId'){
+        handlePeer(data_)
     }
     
 
@@ -63,31 +61,46 @@ function receivedData(data_, connectionInstance) {
 function createRoom(data,connectionInstance){
     if (!activeRooms[data.roomName]) {
         let date=Date.now();
+        let connectionStart={}
+        connectionStart[data.username]=connectionInstance
         activeRooms[data.roomName]={
-            "connections": [connectionInstance],
+            "connections": connectionStart,
             "chat": {},
             "password": "",
-            "peerIds":[],
             "createTimeStamp": date
         }
-        connectionInstance.send(JSON.stringify({"type":"roomCreation","success": 2,"message": "created room", "peerIds": []}))
+        connectionInstance.on('close',function(connection){
+            console.log('closed')
+            delete activeRooms[data.roomName]['connections'][data.username]
+        })
+        connectionInstance.send(JSON.stringify({"type":"roomCreation","success": 2,"message": "created room"}))
     } else {
         //probably check for pw here
-        connectionInstance.send(JSON.stringify({"type": "roomCreation","success":1,"message": "added you to room",
-         "peerIds": activeRooms[data.roomName]['peerIds']}))
-        
-         //send user id to all other connection instances in room here
-        activeRooms[data.roomName]['connections'].push(connectionInstance);
+        var usernames=Object.keys(activeRooms[data.roomName]["connections"])
+        connectionInstance.send(JSON.stringify({"type": "roomCreation","success":1,"message": "added you to room","usernames": usernames}))
+        // activeRooms[data.roomName]['connectionCount']++;
+         //update connection instance
+         for(let value of Object.values(activeRooms[data.roomName]['connections'])){
+             value.send(JSON.stringify({"type": "newUser", "username": data.username}))
+         }
+        activeRooms[data.roomName]['connections'][data.username]=connectionInstance;
         
     }
 }
-function addId(data){
-    activeRooms[data.roomName]['peerIds'].push(data.id);
-    for(var i=0;i<activeRooms[data.roomName]['connections'].length-1;i++){
-        activeRooms[data.roomName]['connections'][i].send(JSON.stringify({"type": "newId", "id": data.id}))
-    }
+function handlePeer(data){
+    activeRooms[data.roomName]['connections'][data.target].send(JSON.stringify({
+        "type": "peerId",
+        "initiator": data.initiator,
+        "username": data.username,
+        "id": data.id
+    }))
+    // activeRooms[data.roomName]['peerIds'].push(data.id);
+    // for(var i=0;i<activeRooms[data.roomName]['connections'].length-1;i++){
+    //     activeRooms[data.roomName]['connections'][i].send(JSON.stringify({"type": "newId", "id": data.id}))
+    // }
 }
 function onDisconnect(connection) {
+    for(x in connections)
     //make sure that connection is deleted in the activeRooms as well
-    console.log(connection.remoteAddress + "disconnected")
+    console.log(connection.remoteAddress + " disconnected")
 }

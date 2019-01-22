@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "browserify": "^16.2.3",
+    "buffer": "^5.2.1",
     "express": "^4.16.4",
     "fs": "0.0.1-security",
     "helmet": "^3.15.0",
