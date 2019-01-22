@@ -1,4 +1,5 @@
-var activeRooms = {};
+// var activeRooms = require("./activeRooms.json");
+var activeRooms={};
 var WebSocketServer = require('ws').server;
 const WebSocket=require('ws')
 const https = require('https');
@@ -69,7 +70,7 @@ function createRoom(data,connectionInstance){
             "password": data.password,
             "createTimeStamp": date
         }
-        
+        // console.dir(activeRooms)
         connectionInstance.send(JSON.stringify({"type":"roomCreation","success": 2,"message": "created room"}))
     } else {
         //probably check for pw here
@@ -93,6 +94,10 @@ function createRoom(data,connectionInstance){
     connectionInstance.on('close',function(connection){
         console.log('closed')
         delete activeRooms[data.roomName]['connections'][data.username]
+        if(Object.keys(activeRooms[data.roomName]['connections'].length==0)){
+            //deleting room after users have left
+            delete activeRooms[data.roomName]
+        }
     })
 }
 function handlePeer(data){
