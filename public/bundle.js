@@ -2862,7 +2862,7 @@ $(function(){
         // video.load();
         video.play();
         // userInstance=new Peer({initiator: true,stream: stream})
-        connection=new WebSocket('wss://localhost:8443');
+        connection=new WebSocket('wss://192.168.0.178:8443');
         // connection.onopen=function(){
             
         // }
