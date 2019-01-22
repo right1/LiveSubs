@@ -1,0 +1,14 @@
+use server to manage simplepeer
+if user enters correct password for a roomkey then simplepeer data gets sent to them and they connect
+server stores array of:
+roomName: {
+roomPW (string)
+simplePeerIDs (array[string])
+chatlog (array[{timestamp (string/int), username (string), message (string)}])
+}
+creating room: checks if room exists, if it does then doesn't allow
+if not: creates room on server with specified info
+
+in this method all data sent between clients through simplepeer, server only connects the clients
+
+browserify simplepeer code?

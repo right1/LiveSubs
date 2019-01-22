@@ -1,0 +1,21 @@
+{
+  "name": "livesubs",
+  "version": "1.0.0",
+  "description": "Peer to peer video chat with live transcription and translation.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Viknesh Alagappan",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^16.2.3",
+    "express": "^4.16.4",
+    "fs": "0.0.1-security",
+    "helmet": "^3.15.0",
+    "simple-peer": "^9.2.1",
+    "websocket": "^1.0.28",
+    "ws": "^6.1.2"
+  }
+}
