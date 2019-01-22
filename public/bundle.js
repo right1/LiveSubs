@@ -2839,6 +2839,7 @@ const videoOptions={
     video: true,
     audio: true
 }
+var peerInstances=[];
 var password;
 var clientPeerId;
 $(function(){
@@ -2875,7 +2876,11 @@ $(function(){
                     userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     for(var i=0;i<data.peerIds.length;i++){
                         console.log(data.peerIds[i])
-                        userInstance.signal(data.peerIds[i]);
+                        
+                        let newPeer=new Peer();
+                        newPeer.signal(data.peerIds[i]);
+                        newPeer.on('data',onDataReceived)
+                        peerInstances.push(newPeer);
                     }
                 }
                 userInstance.on('signal',function(data){
@@ -2889,11 +2894,15 @@ $(function(){
                     connection.send(datatosend)
                 })
                 userInstance.on('data',function(data){
-                    console.log(data);
+                    onDataReceived(data);
                 })
             }else if(data.type==='newId'){
                 console.log(data.id)
-                userInstance.signal(data.id);
+               
+                let newPeer=new Peer({initiator:true});
+                newPeer.signal(data.id);
+                newPeer.on('data',onDataReceived)
+                peerInstances.push(newPeer)
             }
             
             
@@ -2902,8 +2911,14 @@ $(function(){
         
     }
     $('#send').click(function(){
-        userInstance.send('test')
+        console.log(peerInstances)
+        for(var i=0;i<peerInstances.length;i++){
+            peerInstances[i].send('hello '+i)
+        }
     })
+    function onDataReceived(data){
+        console.log(data);
+    }
     // function sendTestMessage(){
         
     // }

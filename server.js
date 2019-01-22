@@ -68,8 +68,7 @@ function createRoom(data,connectionInstance){
             "chat": {},
             "password": "",
             "peerIds":[],
-            "createTimeStamp": date,
-            "connections": [connectionInstance]
+            "createTimeStamp": date
         }
         connectionInstance.send(JSON.stringify({"type":"roomCreation","success": 2,"message": "created room", "peerIds": []}))
     } else {
