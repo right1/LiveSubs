@@ -1,0 +1,150 @@
+.userCamera{
+    z-index: 3;
+    position:absolute;
+    transform: scaleX(1) !important;
+    height: 25vh;
+    left: 3px;
+    top: 3px;
+}
+.muteSwitch{
+    z-index: 4;
+    position:absolute;
+    transform: scaleX(1) !important;
+    height: 5vh;
+    width:5vh;
+
+    left: 2vw;
+    top: 20vh;
+}
+.settings{
+    z-index: 4;
+    position:absolute;
+    transform: scaleX(1) !important;
+    height: 5vh;
+    width:5vh;
+
+    left: 1vw;
+    bottom: 1vw;
+}
+body {
+    background-color: #242424;
+}
+.videoBar{
+    z-index:3;
+    position: absolute;
+    bottom: 0;
+}
+.videoBar video{
+    z-index: 2!important;
+    max-height:25vh;
+    margin-left:10px;
+    margin-right:auto;
+}
+.login-ui{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height:90vh
+}
+.typeSelect{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height:25vh;
+    width:80%;
+    text-align:center
+}
+.column{
+    width:50% !important;
+}
+.select2-container {
+    width: 100% !important;
+    padding: 0;
+}
+img.muteSwitch:hover{
+    cursor:pointer
+}
+a:hover{
+    cursor:pointer
+}
+.autocenter{
+    /* display: flex; */
+    padding: 30px;
+    text-align:center;
+}
+.autocenter div{
+    margin: 0 auto;
+    width: 50%; 
+    margin-top: 4px;
+}
+::placeholder{
+    color:lightgrey
+}
+.inputDark{
+    background-color:rgb(192, 192, 192);
+}
+.ui-topright{
+    z-index: 3;
+    position:absolute;
+    transform: scaleX(1) !important;
+    height: 25vh;
+    right: 3px;
+    top: 3px;
+}
+.chatBox{
+   overflow-y: scroll;
+   overflow-x: hidden;
+}
+.chatBoxParent{
+   z-index: 3;
+   position:absolute;
+   background-color:white;
+   right: 0px;
+   top:0px;
+   width: 15vw;
+   height:100vh;
+}
+.chatEnter{
+   position:absolute;
+   width:100%;
+   bottom: 5px
+}
+.chatBox p{
+   margin-bottom:0;
+   margin-top: 3
+}
+.usernameDisplayS2T{
+   color:green;
+}
+.usernameDisplayChat{
+   color:blue
+}
+.usernameDisplayJoin{
+   color:red
+}
+.chatEnterBox{
+   margin-left:5%;
+   height:10vh;
+   width:90%;
+}
+textarea{
+resize: none;
+}
+::-webkit-scrollbar {
+width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+background: #f1f1f1; 
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+background: #888; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+background: #555; 
+}
