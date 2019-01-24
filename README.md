@@ -7,5 +7,7 @@ Utilises a yandex translate widget to translate all messages sent from the other
 This implementation currently only works on Chrome (desktop/Android) due to Firefox requiring a TURN server for simple-peer and the WebSpeech API only being supported on Chrome.
 
 Todo:
+
 -Implement old spotlight and hark hotswapping code
+
 -Implement old subtitle code ontop of spotlight video
