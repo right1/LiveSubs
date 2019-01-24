@@ -11,3 +11,5 @@ Todo:
 -Implement old spotlight and hark hotswapping code
 
 -Implement old subtitle code ontop of spotlight video
+
+-Detect browser and alert user if it isn't supported
