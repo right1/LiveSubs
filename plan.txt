@@ -1,14 +1,7 @@
-use server to manage simplepeer
-if user enters correct password for a roomkey then simplepeer data gets sent to them and they connect
-server stores array of:
-roomName: {
-roomPW (string)
-simplePeerIDs (array[string])
-chatlog (array[{timestamp (string/int), username (string), message (string)}])
-}
-creating room: checks if room exists, if it does then doesn't allow
-if not: creates room on server with specified info
+Todo:
 
-in this method all data sent between clients through simplepeer, server only connects the clients
+-Implement old spotlight and hark hotswapping code
 
-browserify simplepeer code?
+-Implement old subtitle code ontop of spotlight video
+
+-Detect browser and alert user if it isn't supported
