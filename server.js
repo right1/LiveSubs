@@ -13,8 +13,8 @@ const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
 
-let privateKey = fs.readFileSync('credentials/key.pem');
-let certificate = fs.readFileSync('credentials/cert.pem');
+let privateKey = fs.readFileSync('credentials_testing/key.pem');
+let certificate = fs.readFileSync('credentials_testing/cert.pem');
 var credentials = { key: privateKey, cert: certificate };
 
 var app = express();
