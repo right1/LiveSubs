@@ -349,7 +349,7 @@ function updateChatMessages(index) {
     if(index>-1){
         if(messages[index].type===2){
             var messageHTML="<p "
-            if(protectTranslations){
+            if(messages[index].sl==languageIndex&&protectTranslations){
                 messageHTML+='translate="no" '
             }
             messageHTML+="><span class='usernameDisplayS2T' translate='no'>" + messages[index]['username'] + ": </span>";
