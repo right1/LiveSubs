@@ -47,12 +47,10 @@ body {
     height:90vh
 }
 .typeSelect{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height:25vh;
-    width:80%;
-    text-align:center
+    margin: 20px;
+    width: calc((25vw + 30vh)/2);
+    height: calc((25vw + 30vh)/2);
+        border-radius: 100%;
 }
 .column{
     width:50% !important;
@@ -67,6 +65,9 @@ img.muteSwitch:hover{
 a:hover{
     cursor:pointer
 }
+.hoverPointer:hover{
+    cursor:pointer
+}
 .autocenter{
     /* display: flex; */
     padding: 30px;
@@ -74,7 +75,6 @@ a:hover{
 }
 .autocenter div{
     margin: 0 auto;
-    width: 50%; 
     margin-top: 4px;
 }
 ::placeholder{
@@ -147,4 +147,30 @@ background: #888;
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
 background: #555; 
+}
+.big-video{
+    text-align:center;
+}
+.big-video video{
+    height:70vh!important;
+}
+.vertical-center {
+    min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+    min-height: 100vh; /* These two lines are counted as one :-)       */
+  
+    display: flex;
+    align-items: center;
+  }
+  .floating-sub{
+    color: white;
+    text-shadow: -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
+    
+    z-index: 1;
+    font-size: 50px;
+    margin: 0 auto;
+    line-height: 130%;
+    position: relative;
 }

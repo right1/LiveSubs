@@ -1,5 +1,5 @@
 var Peer = require('simple-peer');
-const buffer = require('buffer')
+var hark=require('hark');
 // const translate=require('@vitalets/google-translate-api');
 // var userInstance;//simple-peer client instance
 var roomName;//roomname to create for testing
@@ -19,9 +19,11 @@ var languageIndex = 0; // Default to English.
 var connection;//Websocket connection to server
 var translateTo;//index of language to translate to
 let protectTranslations=true;
+var gracePeriod=false;
 // var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 $(function () {
     $(".select2").select2();
+    $('[data-toggle="tooltip"]').tooltip()
     $('.chatBoxParent').hide();
     var langSelects = [document.getElementById('langSelectC1'), document.getElementById('langSelectC2'), document.getElementById('langSelectJ')];
     for (let i = 0; i < languages.length; i++) {
@@ -52,7 +54,7 @@ $(function () {
                     "timestamp": Date.now()
                 }
                 messages.push(msg);
-                updateChatMessages(messages.length-1)
+                updateChatMessages(messages.length-1,true)
                 sendToAll(JSON.stringify(msg))
             }
         }
@@ -74,11 +76,13 @@ $(function () {
     })
     $('#joinRoom').click(function () {
         $('#login-ui_join').show()
-        $('.typeSelect').hide()
+        $('.typeSelect').hide();
+        $('.buttonContainer').hide();
     })
     $('#createRoom').click(function () {
         $('#login-ui_create').show()
-        $('.typeSelect').hide()
+        $('.typeSelect').hide();
+        $('.buttonContainer').hide();
     })
     $('#muteSwitch_muted').hide();
     $('#muteSwitch_unmuted').hide();
@@ -187,6 +191,17 @@ $(function () {
                     $('#muteSwitch_unmuted').hide(100)
                 }
             })
+            var speechEvents = hark(stream, {});
+            speechEvents.on('speaking', function () {
+                const harkMsg = {
+                    "username": username,
+                    "message": false,
+                    "type": 3,//type 3: hark
+                    "sl": languageIndex,
+                    "timestamp": Date.now()
+                };
+                sendToAll(JSON.stringify(harkMsg));
+            });
         }
 
     }
@@ -214,13 +229,19 @@ $(function () {
                 "type": 0,//type 0: new user joined
                 "timestamp": Date.now()
             })
-            updateChatMessages(messages.length-1)
+            updateChatMessages(messages.length-1,true)
         })
         p.on('stream', function (otherStream) {
             console.log(otherStream)
             var video = document.createElement('video');
             video.id = otherUsername + "_video";
-            document.getElementById('videoBar').appendChild(video);
+            if($("#spotlight video").length==0){
+                $('#spotlight').prepend(video);
+                $('#subtitleParent').css("width",$('#spotlight video').width())
+            }else{
+                document.getElementById('videoBar').appendChild(video);
+            }
+            
             video.srcObject = otherStream;
             // video.onended=function(){
             //     console.log(otherUsername+' video ended')
@@ -311,7 +332,8 @@ $(function () {
             //translate the message
             console.log(data);
             messages.push(data);
-            updateChatMessages(messages.length - 1);
+            setSpotlight(data.username);
+            updateChatMessages(messages.length - 1,true);
             // translate(data.message,{from:data.sl,to:languages[languageIndex]['translateLangCode']}).then(res => {
             //     data.message=res;
             //     messages.push(data);
@@ -320,8 +342,20 @@ $(function () {
             // })
 
         }
+        if(data.type===3 && !gracePeriod){//hark
+            setSpotlight(data.username);
+        }
     }
 })
+function setSpotlight(user){
+    let newSpotlight = $('#' + user + "_video").detach();
+    let oldSpotlight = $('#spotlight').children("video").detach();
+    // Swap places with spotlight and small video.
+    
+    $('#spotlight').prepend(newSpotlight);
+    $('#videoBar').append(oldSpotlight);
+    $('#subtitleParent').css("width",$('#spotlight video').width())
+}
 function loadjscssfile(filename, filetype) {
     if (filetype == "js") { //if filename is a external JavaScript file
         var fileref = document.createElement('script')
@@ -345,7 +379,39 @@ function sendToAll(data) {
         val['peer'].send(data);
     }
 }
-function updateChatMessages(index) {
+function setSubtitleText(text) {
+    let maxSubChars = languages[languageIndex].maxSubtitleChars;
+    const subtitle=document.getElementById('subtitle');
+    let fullText = subtitle.textContent;
+
+    if (fullText.length > 0) {
+        // Prepend a space if there is something already.
+        fullText += ' ';
+    }
+
+    // Append the new sentence and period.
+    fullText += text + '.';
+
+    if (fullText.length > maxSubChars) {
+        // Prepend ellipsis when previous sentences are cut off.
+        fullText = '...' + fullText.substr(fullText.length - maxSubChars, fullText.length);
+    }
+    console.log('updated to: '+fullText);
+    
+    subtitle.textContent = fullText;
+    let subParent = $('#subtitleParent');
+    let curFontSize = 32;
+    let targetSubtitleHeight = curFontSize * 2; // Desired subtitles element height to approx. two lines.
+    subParent.css('font-size', curFontSize);
+
+    while (subParent.height() > targetSubtitleHeight) {
+        subParent.css('font-size', curFontSize);
+        curFontSize-=2;
+    }
+    // Automatically anchor subtitles to bottom of spotlight video.
+    subParent.css('bottom', ($('#spotlight').height()-$('#spotlight video').height() +window.innerHeight*.035) + 'px');
+}
+function updateChatMessages(index,sub) {
     if(index>-1){
         if(messages[index].type===2){
             var messageHTML="<p "
@@ -355,6 +421,13 @@ function updateChatMessages(index) {
             messageHTML+="><span class='usernameDisplayS2T' translate='no'>" + messages[index]['username'] + ": </span>";
             messageHTML += messages[index]['message'] + '</p>';
             $('.chatBox').html($('.chatBox').html()+ messageHTML);
+            if(sub){
+                setSubtitleText(messages[index]['message']);
+            gracePeriod = true;
+            setTimeout(function () {
+                gracePeriod = false;
+            }, 1000)
+            }
         }
         else if(messages[index].type===1){
             var messageHTML="<p "
@@ -422,7 +495,7 @@ function transmitSpeech(message) {
         message = message.substring(0, message.length - 1);
     }
 
-    const msg = {
+    var msg = {
         "username": username,
         "message": message,
         "type": 2,//type 2:speech recognition.
@@ -435,5 +508,6 @@ function transmitSpeech(message) {
 
     // Update our message list locally.
     messages.push(msg);
-    updateChatMessages(messages.length - 1);
+    updateChatMessages(messages.length - 1,false);
 }
+

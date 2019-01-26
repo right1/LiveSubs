@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
         crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
-    <link href="main.css" rel="stylesheet"/>
-        
+    <link href="main.css" rel="stylesheet" />
 <body>
     <!-- <label>ID: </label>
         <textarea id="userID"></textarea>
@@ -21,17 +20,19 @@
        
 
     </div> -->
-
-    <div class="container">
-        <div>
-            <span style="width:20vw"></div>
-        <div><button class="btn btn-primary typeSelect" id="createRoom">CREATE</button></div>
-        <div style="height:10vh"></div>
-        <div><button class="btn btn-secondary typeSelect" id="joinRoom">JOIN</button></div>
-    </div>
+    <div class="vertical-center buttonContainer"><div class="container">
+        <div class="row">
+            <div class="span6" style="float: none; margin: 0 auto;">
+                <button class="btn btn-primary typeSelect" id="createRoom"><img src="https://i.imgur.com/KfE1lSM.png" style="width:100%"></button>
+            </div>
+            <div class="span6" style="float: none; margin: 0 auto;">
+                <div><button class="btn btn-secondary typeSelect" id="joinRoom"><img src="https://i.imgur.com/sOwfAsx.png" style="width:100%"></button></div>
+            </div>
+        </div>
+    </div></div>
 
     <div id="login-ui_create" class="login-ui">
-        <div class="col-8">
+        <div class="col-12 col-lg-8 col-xl-4">
             <div class="card" style="width:100%">
                 <div class="card-body autocenter">
                     <h5 class="card-title">LiveSubs</h5>
@@ -65,7 +66,7 @@
                     </div>
                     <div class="row" style="margin-bottom:10px">
                         <div class="column">
-                            <span class="card-text">Room language 1 (your speech to text language): </span>
+                            <span class="card-text" >Room language 1 <span class="hoverPointer" data-toggle="tooltip" data-placement="right" title="Your speech to text language">(?)</span>: </span>
                         </div>
                         <div class="column">
                             <select class="select2" id="langSelectC1">
@@ -115,7 +116,7 @@
 
     </div>
     <div id="login-ui_join" class="login-ui">
-        <div class="col-8">
+        <div class="col-12 col-lg-8 col-xl-4">
             <div class="card" style="width:100%">
                 <div class="card-body autocenter">
                     <h5 class="card-title">LiveSubs</h5>
@@ -183,6 +184,11 @@
         </div>
 
     </div>
+    <div id="spotlight" class="big-video">
+        <div id="subtitleParent" class="floating-sub">
+            <span id="subtitle"></span>
+        </div>
+    </div>
     <div class="modal fade" id="settingsMenu" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -193,7 +199,8 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p translate="no">IMPORTANT: This will only change the display language, speech to text will still function in the
+                    <p translate="no">IMPORTANT: This will only change the display language, speech to text will still
+                        function in the
                         language you chose upon joining the room.</p>
                     <p>Powered by Yandex Translate.</p>
                     <!-- Yandex will get added here -->
@@ -212,7 +219,7 @@
         <a><img id="muteSwitch_unmuted" class="muteSwitch" src="https://i.imgur.com/qs6sclX.png" alt="Mute"></a>
         <a><img id="muteSwitch_muted" class="muteSwitch" src="https://i.imgur.com/KOZH7m7.png" alt="Unmute"></a>
     </div>
-    <img  data-toggle="modal" data-target="#settingsMenu" class="settings" src="https://cdn4.iconfinder.com/data/icons/web-ui-color/128/Settings-512.png"></img>
+    <img data-toggle="modal" data-target="#settingsMenu" class="settings" src="https://cdn4.iconfinder.com/data/icons/web-ui-color/128/Settings-512.png"></img>
     <div id="videoBar" class="videoBar">
 
     </div>
@@ -228,7 +235,8 @@
 
         </div>
         <div class="chatEnter">
-            <textarea class="chatEnterBox" type="text" rows="3" class="form-control" placeholder="Enter a message..." id="chatEnter"></textarea>
+            <textarea class="chatEnterBox" type="text" rows="3" class="form-control" placeholder="Enter a message..."
+                id="chatEnter"></textarea>
         </div>
     </div>
 
@@ -240,9 +248,10 @@
         <button id="abort">Abort</button> -->
     <!-- <pre id="messages"></pre> -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
         crossorigin="anonymous"></script>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
 
     <script src="speech.js"></script>

@@ -2833,7 +2833,7 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
 }).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 },{"process/browser.js":7,"timers":8}],9:[function(require,module,exports){
 var Peer = require('simple-peer');
-const buffer = require('buffer')
+var hark=require('hark');
 // const translate=require('@vitalets/google-translate-api');
 // var userInstance;//simple-peer client instance
 var roomName;//roomname to create for testing
@@ -2853,9 +2853,11 @@ var languageIndex = 0; // Default to English.
 var connection;//Websocket connection to server
 var translateTo;//index of language to translate to
 let protectTranslations=true;
+var gracePeriod=false;
 // var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 $(function () {
     $(".select2").select2();
+    $('[data-toggle="tooltip"]').tooltip()
     $('.chatBoxParent').hide();
     var langSelects = [document.getElementById('langSelectC1'), document.getElementById('langSelectC2'), document.getElementById('langSelectJ')];
     for (let i = 0; i < languages.length; i++) {
@@ -2886,7 +2888,7 @@ $(function () {
                     "timestamp": Date.now()
                 }
                 messages.push(msg);
-                updateChatMessages(messages.length-1)
+                updateChatMessages(messages.length-1,true)
                 sendToAll(JSON.stringify(msg))
             }
         }
@@ -2908,11 +2910,13 @@ $(function () {
     })
     $('#joinRoom').click(function () {
         $('#login-ui_join').show()
-        $('.typeSelect').hide()
+        $('.typeSelect').hide();
+        $('.buttonContainer').hide();
     })
     $('#createRoom').click(function () {
         $('#login-ui_create').show()
-        $('.typeSelect').hide()
+        $('.typeSelect').hide();
+        $('.buttonContainer').hide();
     })
     $('#muteSwitch_muted').hide();
     $('#muteSwitch_unmuted').hide();
@@ -3021,6 +3025,17 @@ $(function () {
                     $('#muteSwitch_unmuted').hide(100)
                 }
             })
+            var speechEvents = hark(stream, {});
+            speechEvents.on('speaking', function () {
+                const harkMsg = {
+                    "username": username,
+                    "message": false,
+                    "type": 3,//type 3: hark
+                    "sl": languageIndex,
+                    "timestamp": Date.now()
+                };
+                sendToAll(JSON.stringify(harkMsg));
+            });
         }
 
     }
@@ -3048,13 +3063,19 @@ $(function () {
                 "type": 0,//type 0: new user joined
                 "timestamp": Date.now()
             })
-            updateChatMessages(messages.length-1)
+            updateChatMessages(messages.length-1,true)
         })
         p.on('stream', function (otherStream) {
             console.log(otherStream)
             var video = document.createElement('video');
             video.id = otherUsername + "_video";
-            document.getElementById('videoBar').appendChild(video);
+            if($("#spotlight video").length==0){
+                $('#spotlight').prepend(video);
+                $('#subtitleParent').css("width",$('#spotlight video').width())
+            }else{
+                document.getElementById('videoBar').appendChild(video);
+            }
+            
             video.srcObject = otherStream;
             // video.onended=function(){
             //     console.log(otherUsername+' video ended')
@@ -3145,7 +3166,8 @@ $(function () {
             //translate the message
             console.log(data);
             messages.push(data);
-            updateChatMessages(messages.length - 1);
+            setSpotlight(data.username);
+            updateChatMessages(messages.length - 1,true);
             // translate(data.message,{from:data.sl,to:languages[languageIndex]['translateLangCode']}).then(res => {
             //     data.message=res;
             //     messages.push(data);
@@ -3154,8 +3176,20 @@ $(function () {
             // })
 
         }
+        if(data.type===3 && !gracePeriod){//hark
+            setSpotlight(data.username);
+        }
     }
 })
+function setSpotlight(user){
+    let newSpotlight = $('#' + user + "_video").detach();
+    let oldSpotlight = $('#spotlight').children("video").detach();
+    // Swap places with spotlight and small video.
+    
+    $('#spotlight').prepend(newSpotlight);
+    $('#videoBar').append(oldSpotlight);
+    $('#subtitleParent').css("width",$('#spotlight video').width())
+}
 function loadjscssfile(filename, filetype) {
     if (filetype == "js") { //if filename is a external JavaScript file
         var fileref = document.createElement('script')
@@ -3179,16 +3213,55 @@ function sendToAll(data) {
         val['peer'].send(data);
     }
 }
-function updateChatMessages(index) {
+function setSubtitleText(text) {
+    let maxSubChars = languages[languageIndex].maxSubtitleChars;
+    const subtitle=document.getElementById('subtitle');
+    let fullText = subtitle.textContent;
+
+    if (fullText.length > 0) {
+        // Prepend a space if there is something already.
+        fullText += ' ';
+    }
+
+    // Append the new sentence and period.
+    fullText += text + '.';
+
+    if (fullText.length > maxSubChars) {
+        // Prepend ellipsis when previous sentences are cut off.
+        fullText = '...' + fullText.substr(fullText.length - maxSubChars, fullText.length);
+    }
+    console.log('updated to: '+fullText);
+    
+    subtitle.textContent = fullText;
+    let subParent = $('#subtitleParent');
+    let curFontSize = 32;
+    let targetSubtitleHeight = curFontSize * 2; // Desired subtitles element height to approx. two lines.
+    subParent.css('font-size', curFontSize);
+
+    while (subParent.height() > targetSubtitleHeight) {
+        subParent.css('font-size', curFontSize);
+        curFontSize-=2;
+    }
+    // Automatically anchor subtitles to bottom of spotlight video.
+    subParent.css('bottom', ($('#spotlight').height()-$('#spotlight video').height() +window.innerHeight*.035) + 'px');
+}
+function updateChatMessages(index,sub) {
     if(index>-1){
         if(messages[index].type===2){
             var messageHTML="<p "
-            if(protectTranslations){
+            if(messages[index].sl==languageIndex&&protectTranslations){
                 messageHTML+='translate="no" '
             }
             messageHTML+="><span class='usernameDisplayS2T' translate='no'>" + messages[index]['username'] + ": </span>";
             messageHTML += messages[index]['message'] + '</p>';
             $('.chatBox').html($('.chatBox').html()+ messageHTML);
+            if(sub){
+                setSubtitleText(messages[index]['message']);
+            gracePeriod = true;
+            setTimeout(function () {
+                gracePeriod = false;
+            }, 1000)
+            }
         }
         else if(messages[index].type===1){
             var messageHTML="<p "
@@ -3256,7 +3329,7 @@ function transmitSpeech(message) {
         message = message.substring(0, message.length - 1);
     }
 
-    const msg = {
+    var msg = {
         "username": username,
         "message": message,
         "type": 2,//type 2:speech recognition.
@@ -3269,10 +3342,11 @@ function transmitSpeech(message) {
 
     // Update our message list locally.
     messages.push(msg);
-    updateChatMessages(messages.length - 1);
+    updateChatMessages(messages.length - 1,false);
 }
 
-},{"buffer":3,"simple-peer":29}],10:[function(require,module,exports){
+
+},{"hark":14,"simple-peer":30}],10:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3919,7 +3993,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":16}],13:[function(require,module,exports){
+},{"ms":17}],13:[function(require,module,exports){
 // originally pulled out of simple-peer
 
 module.exports = function getBrowserRTC () {
@@ -3937,6 +4011,151 @@ module.exports = function getBrowserRTC () {
 }
 
 },{}],14:[function(require,module,exports){
+var WildEmitter = require('wildemitter');
+
+function getMaxVolume (analyser, fftBins) {
+  var maxVolume = -Infinity;
+  analyser.getFloatFrequencyData(fftBins);
+
+  for(var i=4, ii=fftBins.length; i < ii; i++) {
+    if (fftBins[i] > maxVolume && fftBins[i] < 0) {
+      maxVolume = fftBins[i];
+    }
+  };
+
+  return maxVolume;
+}
+
+
+var audioContextType;
+if (typeof window !== 'undefined') {
+  audioContextType = window.AudioContext || window.webkitAudioContext;
+}
+// use a single audio context due to hardware limits
+var audioContext = null;
+module.exports = function(stream, options) {
+  var harker = new WildEmitter();
+
+  // make it not break in non-supported browsers
+  if (!audioContextType) return harker;
+
+  //Config
+  var options = options || {},
+      smoothing = (options.smoothing || 0.1),
+      interval = (options.interval || 50),
+      threshold = options.threshold,
+      play = options.play,
+      history = options.history || 10,
+      running = true;
+
+  // Ensure that just a single AudioContext is internally created
+  audioContext = options.audioContext || audioContext || new audioContextType();
+
+  var sourceNode, fftBins, analyser;
+
+  analyser = audioContext.createAnalyser();
+  analyser.fftSize = 512;
+  analyser.smoothingTimeConstant = smoothing;
+  fftBins = new Float32Array(analyser.frequencyBinCount);
+
+  if (stream.jquery) stream = stream[0];
+  if (stream instanceof HTMLAudioElement || stream instanceof HTMLVideoElement) {
+    //Audio Tag
+    sourceNode = audioContext.createMediaElementSource(stream);
+    if (typeof play === 'undefined') play = true;
+    threshold = threshold || -50;
+  } else {
+    //WebRTC Stream
+    sourceNode = audioContext.createMediaStreamSource(stream);
+    threshold = threshold || -50;
+  }
+
+  sourceNode.connect(analyser);
+  if (play) analyser.connect(audioContext.destination);
+
+  harker.speaking = false;
+
+  harker.suspend = function() {
+    return audioContext.suspend();
+  }
+  harker.resume = function() {
+    return audioContext.resume();
+  }
+  Object.defineProperty(harker, 'state', { get: function() {
+    return audioContext.state;
+  }});
+  audioContext.onstatechange = function() {
+    harker.emit('state_change', audioContext.state);
+  }
+
+  harker.setThreshold = function(t) {
+    threshold = t;
+  };
+
+  harker.setInterval = function(i) {
+    interval = i;
+  };
+
+  harker.stop = function() {
+    running = false;
+    harker.emit('volume_change', -100, threshold);
+    if (harker.speaking) {
+      harker.speaking = false;
+      harker.emit('stopped_speaking');
+    }
+    analyser.disconnect();
+    sourceNode.disconnect();
+  };
+  harker.speakingHistory = [];
+  for (var i = 0; i < history; i++) {
+      harker.speakingHistory.push(0);
+  }
+
+  // Poll the analyser node to determine if speaking
+  // and emit events if changed
+  var looper = function() {
+    setTimeout(function() {
+
+      //check if stop has been called
+      if(!running) {
+        return;
+      }
+
+      var currentVolume = getMaxVolume(analyser, fftBins);
+
+      harker.emit('volume_change', currentVolume, threshold);
+
+      var history = 0;
+      if (currentVolume > threshold && !harker.speaking) {
+        // trigger quickly, short history
+        for (var i = harker.speakingHistory.length - 3; i < harker.speakingHistory.length; i++) {
+          history += harker.speakingHistory[i];
+        }
+        if (history >= 2) {
+          harker.speaking = true;
+          harker.emit('speaking');
+        }
+      } else if (currentVolume < threshold && harker.speaking) {
+        for (var i = 0; i < harker.speakingHistory.length; i++) {
+          history += harker.speakingHistory[i];
+        }
+        if (history == 0) {
+          harker.speaking = false;
+          harker.emit('stopped_speaking');
+        }
+      }
+      harker.speakingHistory.shift();
+      harker.speakingHistory.push(0 + (currentVolume > threshold));
+
+      looper();
+    }, interval);
+  };
+  looper();
+
+  return harker;
+}
+
+},{"wildemitter":33}],15:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -3961,14 +4180,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -4132,7 +4351,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -4180,7 +4399,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 
 
 }).call(this,require('_process'))
-},{"_process":7}],18:[function(require,module,exports){
+},{"_process":7}],19:[function(require,module,exports){
 (function (process,global){
 'use strict'
 
@@ -4222,7 +4441,7 @@ function randomBytes (size, cb) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":7,"safe-buffer":28}],19:[function(require,module,exports){
+},{"_process":7,"safe-buffer":29}],20:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4354,7 +4573,7 @@ Duplex.prototype._destroy = function (err, cb) {
 
   pna.nextTick(cb, err);
 };
-},{"./_stream_readable":21,"./_stream_writable":23,"core-util-is":10,"inherits":14,"process-nextick-args":17}],20:[function(require,module,exports){
+},{"./_stream_readable":22,"./_stream_writable":24,"core-util-is":10,"inherits":15,"process-nextick-args":18}],21:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4402,7 +4621,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":22,"core-util-is":10,"inherits":14}],21:[function(require,module,exports){
+},{"./_stream_transform":23,"core-util-is":10,"inherits":15}],22:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5424,7 +5643,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./_stream_duplex":19,"./internal/streams/BufferList":24,"./internal/streams/destroy":25,"./internal/streams/stream":26,"_process":7,"core-util-is":10,"events":4,"inherits":14,"isarray":15,"process-nextick-args":17,"safe-buffer":28,"string_decoder/":30,"util":2}],22:[function(require,module,exports){
+},{"./_stream_duplex":20,"./internal/streams/BufferList":25,"./internal/streams/destroy":26,"./internal/streams/stream":27,"_process":7,"core-util-is":10,"events":4,"inherits":15,"isarray":16,"process-nextick-args":18,"safe-buffer":29,"string_decoder/":31,"util":2}],23:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5639,7 +5858,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":19,"core-util-is":10,"inherits":14}],23:[function(require,module,exports){
+},{"./_stream_duplex":20,"core-util-is":10,"inherits":15}],24:[function(require,module,exports){
 (function (process,global,setImmediate){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6329,7 +6548,7 @@ Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
-},{"./_stream_duplex":19,"./internal/streams/destroy":25,"./internal/streams/stream":26,"_process":7,"core-util-is":10,"inherits":14,"process-nextick-args":17,"safe-buffer":28,"timers":8,"util-deprecate":31}],24:[function(require,module,exports){
+},{"./_stream_duplex":20,"./internal/streams/destroy":26,"./internal/streams/stream":27,"_process":7,"core-util-is":10,"inherits":15,"process-nextick-args":18,"safe-buffer":29,"timers":8,"util-deprecate":32}],25:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -6409,7 +6628,7 @@ if (util && util.inspect && util.inspect.custom) {
     return this.constructor.name + ' ' + obj;
   };
 }
-},{"safe-buffer":28,"util":2}],25:[function(require,module,exports){
+},{"safe-buffer":29,"util":2}],26:[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -6484,10 +6703,10 @@ module.exports = {
   destroy: destroy,
   undestroy: undestroy
 };
-},{"process-nextick-args":17}],26:[function(require,module,exports){
+},{"process-nextick-args":18}],27:[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":4}],27:[function(require,module,exports){
+},{"events":4}],28:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -6496,7 +6715,7 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":19,"./lib/_stream_passthrough.js":20,"./lib/_stream_readable.js":21,"./lib/_stream_transform.js":22,"./lib/_stream_writable.js":23}],28:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":20,"./lib/_stream_passthrough.js":21,"./lib/_stream_readable.js":22,"./lib/_stream_transform.js":23,"./lib/_stream_writable.js":24}],29:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -6560,7 +6779,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":3}],29:[function(require,module,exports){
+},{"buffer":3}],30:[function(require,module,exports){
 (function (Buffer){
 module.exports = Peer
 
@@ -7605,7 +7824,7 @@ function makeError (message, code) {
 function noop () {}
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":3,"debug":11,"get-browser-rtc":13,"inherits":14,"randombytes":18,"readable-stream":27}],30:[function(require,module,exports){
+},{"buffer":3,"debug":11,"get-browser-rtc":13,"inherits":15,"randombytes":19,"readable-stream":28}],31:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7902,7 +8121,7 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":28}],31:[function(require,module,exports){
+},{"safe-buffer":29}],32:[function(require,module,exports){
 (function (global){
 
 /**
@@ -7973,4 +8192,159 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],33:[function(require,module,exports){
+/*
+WildEmitter.js is a slim little event emitter by @henrikjoreteg largely based
+on @visionmedia's Emitter from UI Kit.
+
+Why? I wanted it standalone.
+
+I also wanted support for wildcard emitters like this:
+
+emitter.on('*', function (eventName, other, event, payloads) {
+
+});
+
+emitter.on('somenamespace*', function (eventName, payloads) {
+
+});
+
+Please note that callbacks triggered by wildcard registered events also get
+the event name as the first argument.
+*/
+
+module.exports = WildEmitter;
+
+function WildEmitter() { }
+
+WildEmitter.mixin = function (constructor) {
+    var prototype = constructor.prototype || constructor;
+
+    prototype.isWildEmitter= true;
+
+    // Listen on the given `event` with `fn`. Store a group name if present.
+    prototype.on = function (event, groupName, fn) {
+        this.callbacks = this.callbacks || {};
+        var hasGroup = (arguments.length === 3),
+            group = hasGroup ? arguments[1] : undefined,
+            func = hasGroup ? arguments[2] : arguments[1];
+        func._groupName = group;
+        (this.callbacks[event] = this.callbacks[event] || []).push(func);
+        return this;
+    };
+
+    // Adds an `event` listener that will be invoked a single
+    // time then automatically removed.
+    prototype.once = function (event, groupName, fn) {
+        var self = this,
+            hasGroup = (arguments.length === 3),
+            group = hasGroup ? arguments[1] : undefined,
+            func = hasGroup ? arguments[2] : arguments[1];
+        function on() {
+            self.off(event, on);
+            func.apply(this, arguments);
+        }
+        this.on(event, group, on);
+        return this;
+    };
+
+    // Unbinds an entire group
+    prototype.releaseGroup = function (groupName) {
+        this.callbacks = this.callbacks || {};
+        var item, i, len, handlers;
+        for (item in this.callbacks) {
+            handlers = this.callbacks[item];
+            for (i = 0, len = handlers.length; i < len; i++) {
+                if (handlers[i]._groupName === groupName) {
+                    //console.log('removing');
+                    // remove it and shorten the array we're looping through
+                    handlers.splice(i, 1);
+                    i--;
+                    len--;
+                }
+            }
+        }
+        return this;
+    };
+
+    // Remove the given callback for `event` or all
+    // registered callbacks.
+    prototype.off = function (event, fn) {
+        this.callbacks = this.callbacks || {};
+        var callbacks = this.callbacks[event],
+            i;
+
+        if (!callbacks) return this;
+
+        // remove all handlers
+        if (arguments.length === 1) {
+            delete this.callbacks[event];
+            return this;
+        }
+
+        // remove specific handler
+        i = callbacks.indexOf(fn);
+        callbacks.splice(i, 1);
+        if (callbacks.length === 0) {
+            delete this.callbacks[event];
+        }
+        return this;
+    };
+
+    /// Emit `event` with the given args.
+    // also calls any `*` handlers
+    prototype.emit = function (event) {
+        this.callbacks = this.callbacks || {};
+        var args = [].slice.call(arguments, 1),
+            callbacks = this.callbacks[event],
+            specialCallbacks = this.getWildcardCallbacks(event),
+            i,
+            len,
+            item,
+            listeners;
+
+        if (callbacks) {
+            listeners = callbacks.slice();
+            for (i = 0, len = listeners.length; i < len; ++i) {
+                if (!listeners[i]) {
+                    break;
+                }
+                listeners[i].apply(this, args);
+            }
+        }
+
+        if (specialCallbacks) {
+            len = specialCallbacks.length;
+            listeners = specialCallbacks.slice();
+            for (i = 0, len = listeners.length; i < len; ++i) {
+                if (!listeners[i]) {
+                    break;
+                }
+                listeners[i].apply(this, [event].concat(args));
+            }
+        }
+
+        return this;
+    };
+
+    // Helper for for finding special wildcard event handlers that match the event
+    prototype.getWildcardCallbacks = function (eventName) {
+        this.callbacks = this.callbacks || {};
+        var item,
+            split,
+            result = [];
+
+        for (item in this.callbacks) {
+            split = item.split('*');
+            if (item === '*' || (split.length === 2 && eventName.slice(0, split[0].length) === split[0])) {
+                result = result.concat(this.callbacks[item]);
+            }
+        }
+        return result;
+    };
+
+};
+
+WildEmitter.mixin(WildEmitter);
+
 },{}]},{},[9]);
