@@ -68,8 +68,10 @@ wss.on('connection', function connection(ws) {
 });
 
 function receivedData(data_, connectionInstance) {
+    // Received request from client.
     data_ = JSON.parse(data_);
-    if (data_.type === "roomRequest") {
+
+    if (data_.type === 'roomRequest') {
         createRoom(data_, connectionInstance);
     }
     else if (data_.type === 'peerId') {
@@ -82,6 +84,7 @@ function createRoom(data, connectionInstance) {
         let date = Date.now();
         let connectionStart = {}
         connectionStart[data.username] = connectionInstance;
+
         activeRooms[data.roomName] = {
             "connections": connectionStart,
             "chat": {},
@@ -89,23 +92,25 @@ function createRoom(data, connectionInstance) {
             "createTimeStamp": date,
             "languages": data.languages
         }
-        // console.dir(activeRooms)
+
         connectionInstance.send(JSON.stringify({
             "type": "roomCreation",
             "success": CREATED,
             "message": "created room",
             "roomName": data.roomName
         }));
-        console.log('created ' + data.roomName);
+
+        console.log(data.username + ' created room ' + data.roomName);
     }
     else {
         var usernames = Object.keys(activeRooms[data.roomName]["connections"]);
-        const roomLanguages = activeRooms[data.roomName]['languages']
+        const roomLanguages = activeRooms[data.roomName]['languages'];
+
         if (activeRooms[data.roomName]['password'] !== data.password) {
             connectionInstance.send(JSON.stringify({
                 "type": "roomCreation",
                 "success": FAILED,
-                "message": "Password incorrect!"
+                "message": "Incorrect password!"
             }));
             return;
         }
@@ -126,20 +131,36 @@ function createRoom(data, connectionInstance) {
             }));
             return;
         }
+
+        // Inform client of which language to translate to. If the translation is not applicable, it will be -1.
         let otherLanguage = -1;
+
         for (let i = 0; i < roomLanguages.length; i++) {
             if (roomLanguages[i] != data.language) {
                 otherLanguage = roomLanguages[i];
+                break;
             }
         }
-        connectionInstance.send(JSON.stringify({ "type": "roomCreation", "roomName": data.roomName, "success": JOINED, "message": "added you to room", "usernames": usernames, "translateTo": otherLanguage }));
+
+        connectionInstance.send(JSON.stringify({
+            "type": "roomCreation",
+            "roomName": data.roomName,
+            "success": JOINED,
+            "message": "added you to room",
+            "usernames": usernames,
+            "translateTo": otherLanguage
+        }));
+
         // activeRooms[data.roomName]['connectionCount']++;
         //update connection instance
         for (let value of Object.values(activeRooms[data.roomName]['connections'])) {
-            value.send(JSON.stringify({ "type": "newUser", "username": data.username }));
+            value.send(JSON.stringify({
+                "type": "newUser",
+                "username": data.username
+            }));
         }
         activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
-        console.log('user joined ' + data.roomName);
+        console.log(data.username + ' joined ' + data.roomName);
     }
     connectionInstance.on('close', function (connection) {
         delete activeRooms[data.roomName]['connections'][data.username];
@@ -147,32 +168,29 @@ function createRoom(data, connectionInstance) {
         if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {
             //deleting room after users have left
             delete activeRooms[data.roomName];
-            console.log('deleted room ' + data.roomName);
+            console.log('Deleted room ' + data.roomName);
         }
     })
 }
 
 function handlePeer(data) {
+    // Send response back to client.
     if (data.password !== activeRooms[data.roomName]['password']) {
         activeRooms[data.roomName]['connections'][data.target].send(JSON.stringify({
             "type": "peerId",
             "success": FAILED,
             "message": "Incorrect password"
         }));
-        return;
     }
-
-    activeRooms[data.roomName]['connections'][data.target].send(JSON.stringify({
-        "type": "peerId",
-        "success": JOINED,
-        "initiator": data.initiator,
-        "username": data.username,
-        "id": data.id
-    }));
-    // activeRooms[data.roomName]['peerIds'].push(data.id);
-    // for(var i=0;i<activeRooms[data.roomName]['connections'].length-1;i++){
-    //     activeRooms[data.roomName]['connections'][i].send(JSON.stringify({"type": "newId", "id": data.id}))
-    // }
+    else {
+        activeRooms[data.roomName]['connections'][data.target].send(JSON.stringify({
+            "type": "peerId",
+            "success": JOINED,
+            "initiator": data.initiator,
+            "username": data.username,
+            "id": data.id
+        }));
+    }
 }
 
 function onDisconnect(connection) {
