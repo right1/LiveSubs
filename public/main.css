@@ -1,172 +1,179 @@
-.userCamera{
-    z-index: 3;
-    position:absolute;
-    transform: scaleX(1) !important;
-    height: 25vh;
-    left: 3px;
-    top: 3px;
-}
-.muteSwitch{
-    z-index: 4;
-    position:absolute;
-    transform: scaleX(1) !important;
-    transform-origin: center;
-    height: 5vh;
-    width:5vh;
-
-    left: 1vw;
-    top: 19vh;
-}
-img.muteSwitch:hover{
-    cursor:pointer
-}
-.settings{
-    z-index: 4;
-    position:absolute;
-    transform: scaleX(1) !important;
-    height: 5vh;
-    width:5vh;
-
-    left: 1vw;
-    bottom: 1vw;
-}
 body {
-    background-color: #242424;
+	background-color: #242424;
 }
-.videoBar{
-    z-index:3;
-    position: absolute;
-    bottom: 0;
+.userCamera {
+	z-index: 3;
+	position: absolute;
+	transform: scaleX(1) !important;
+	height: 25vh;
+	left: 3px;
+	top: 3px;
+	background-color: #000000;
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
 }
-.videoBar video{
-    z-index: 2!important;
-    max-height:25vh;
-    margin-left:10px;
-    margin-right:auto;
+
+.muteSwitch {
+	z-index: 4;
+	position: absolute;
+	transform: scaleX(1) !important;
+	transform-origin: center;
+	height: 5vh;
+	width: 5vh;
+	left: 1vw;
+	top: 19vh;
 }
-.login-ui{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height:90vh
+img.muteSwitch:hover {
+	cursor: pointer
 }
-.typeSelect{
-    margin: 20px;
-    width: calc((25vw + 30vh)/2);
-    height: calc((25vw + 30vh)/2);
-        border-radius: 100%;
+.settings {
+	z-index: 4;
+	position: absolute;
+	transform: scaleX(1) !important;
+	height: 5vh;
+	width: 5vh;
+	left: 1vw;
+	bottom: 1vw;
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+.videoBar {
+	z-index: 3;
+	position: absolute;
+	bottom: 0;
+}
+.videoBar video {
+	z-index: 2!important;
+	max-height: 25vh;
+	margin-left: 10px;
+	margin-right: auto;
+}
+.login-ui {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 90vh
+}
+.typeSelectBtn {
+	margin: 20px;
+	width: calc((25vw + 30vh)/2);
+	height: calc((25vw + 30vh)/2);
+    border-radius: 50%;
+    border:solid 2px #a0a0a0a0;
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
 }
 .form-control {
-    height: calc(1.8rem + 2px) !important;
+	height: calc(1.8rem + 2px) !important;
 }
 .showHidePwd {
-    height: calc(1.8rem + 2px) !important;
-    width: auto;
-    margin-left: 5px;
+	height: calc(1.8rem + 2px) !important;
+	width: auto;
+	margin-left: 5px;
+}
+.card-body {
+	box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.3);
 }
 .card-text {
-    text-align: left;
-    float: left;
+	text-align: left;
+	float: left;
 }
-.column-labels{
-    width:45% !important;
-    padding-right:10px;
+.column-labels {
+	width: 45% !important;
+	padding-right: 10px;
 }
-.column-right{
-    width:55% !important;
+.column-right {
+	width: 55% !important;
 }
 .select2-container {
-    width: 100% !important;
-    padding: 0;
+	width: 100% !important;
+	padding: 0;
 }
-a:hover{
-    cursor:pointer
+a:hover {
+	cursor: pointer
 }
-.hoverPointer:hover{
-    cursor:pointer
+.hoverPointer:hover {
+	cursor: pointer
 }
-.autocenter{
-    /* display: flex; */
-    text-align:center;
+.autocenter {
+	/* display: flex; */
+	text-align: center;
 }
-.autocenter div{
-    margin: 0 auto;
-    margin-top: 4px;
+.autocenter div {
+	margin: 0 auto;
+	margin-top: 4px;
 }
-::placeholder{
-    color:lightgrey
+::placeholder {
+	color: lightgrey
 }
-.inputDark{
-    background-color:#f0f0f0;
+.inputDark {
+	background-color: #f0f0f0;
 }
-.ui-topright{
-    z-index: 3;
-    position:absolute;
-    transform: scaleX(1) !important;
-    height: 25vh;
-    right: 3px;
-    top: 3px;
+.ui-topright {
+	z-index: 3;
+	position: absolute;
+	transform: scaleX(1) !important;
+	height: 25vh;
+	right: 3px;
+	top: 3px;
 }
-.chatBox{
-   overflow-x: hidden;
-   overflow-y: auto;
+.chatBox {
+	overflow-x: hidden;
+	overflow-y: auto;
 }
-.chatBoxParent{
-   z-index: 3;
-   position:absolute;
-   background-color:white;
-   right: 0px;
-   top:0px;
-   width: 16vw;
-   min-width: 220px;
-   height:100vh;
+.chatBoxParent {
+	z-index: 3;
+	position: absolute;
+	background-color: white;
+	right: 0px;
+	top: 0px;
+	width: 16vw;
+	min-width: 220px;
+	height: 100vh;
+	box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.3);
 }
 .chatInner {
-    margin-left: 4%;
-    margin-right: 1%;
+	margin-left: 4%;
+	margin-right: 1%;
 }
-.chatEnter{
-   position:absolute;
-   width:90%;
-   bottom: 5px
+.chatEnter {
+	position: absolute;
+	width: 90%;
+	bottom: 5px
 }
-.chatBox p{
-   margin-bottom:0;
-   margin-top: 3
+.chatBox p {
+	margin-bottom: 0;
+	margin-top: 3
 }
-.chatEnterBox{
-   height:10vh;
-   width:100%;
+.chatEnterBox {
+	height: 10vh;
+	width: 100%;
 }
-.usernameDisplayS2T{
-   color:rgb(61, 182, 45);
+.usernameDisplayS2T {
+	color: rgb(61, 182, 45);
 }
-.usernameDisplayChat{
-   color:rgb(37, 72, 231)
+.usernameDisplayChat {
+	color: rgb(37, 72, 231)
 }
-.usernameDisplayJoin{
-   color:#cf6339
+.usernameDisplayJoin {
+	color: #cf6339
 }
-textarea{
-resize: none;
+textarea {
+	resize: none;
 }
 ::-webkit-scrollbar {
-    width: 6px;
+	width: 6px;
 }
-
 /* Scrollbar track (background) */
 ::-webkit-scrollbar-track {
-    background: #a1a8b4;
+	background: #a1a8b4;
 }
 /* Scrollbar handle */
 ::-webkit-scrollbar-thumb {
-    background: #c2e2ff;
-    border: solid 1px;
-    border-color:#808080;
+	background: #c2e2ff;
+	border: solid 1px;
+	border-color: #808080;
 }
 /* Scrollbar handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #e0e0e0;
+	background: #e0e0e0;
 }
 
 /* CHECKBOXES
@@ -215,29 +222,27 @@ input:checked+.slider:before {
 	transform: translate(19px, 0px);
 }
 
-.big-video{
-    text-align:center;
+.big-video {
+	text-align: center;
 }
-.big-video video{
-    height:70vh!important;
+.big-video video {
+	height: 70vh!important;
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
 }
 .vertical-center {
-    min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
-    min-height: 100vh; /* These two lines are counted as one :-)       */
-  
-    display: flex;
-    align-items: center;
+	min-height: 100%;
+	/* Fallback for browsers do NOT support vh unit */
+	min-height: 100vh;
+	/* These two lines are counted as one :-)       */
+	display: flex;
+	align-items: center;
 }
-.floating-sub{
-    color: white;
-    text-shadow: -1px -1px 0 #000,
-                1px -1px 0 #000,
-                -1px 1px 0 #000,
-                1px 1px 0 #000;
-    
-    z-index: 1;
-    font-size: 50px;
-    margin: 0 auto;
-    line-height: 130%;
-    position: relative;
+.floating-sub {
+	color: white;
+	text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+	z-index: 1;
+	font-size: 50px;
+	margin: 0 auto;
+	line-height: 130%;
+	position: relative;
 }
