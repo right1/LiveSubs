@@ -348,10 +348,12 @@ $(function () {
     }
 })
 function setSpotlight(user){
+    if($('#spotlight video').length<1 || $('#videoBar video').length<1)return;
+    
     let newSpotlight = $('#' + user + "_video").detach();
+    if($('#spotlight video').length==1)$('#subtitle').text('');//resetting subtitle if the spotlight is cast to a different user.
     let oldSpotlight = $('#spotlight').children("video").detach();
     // Swap places with spotlight and small video.
-    
     $('#spotlight').prepend(newSpotlight);
     $('#videoBar').append(oldSpotlight);
     $('#subtitleParent').css("width",$('#spotlight video').width())
