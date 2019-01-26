@@ -116,7 +116,15 @@ a:hover {
 }
 .chatBox {
 	overflow-x: hidden;
-	overflow-y: auto;
+    overflow-y: hidden;
+    position:relative;
+    bottom: 5px;
+}
+.chatBox:hover{
+    overflow-y: scroll;
+}
+.scroll-y{
+    overflow-y: scroll;
 }
 .chatBoxParent {
 	z-index: 3;
@@ -158,23 +166,35 @@ a:hover {
 textarea {
 	resize: none;
 }
-::-webkit-scrollbar {
+/*::-webkit-scrollbar {
 	width: 6px;
 }
-/* Scrollbar track (background) */
 ::-webkit-scrollbar-track {
 	background: #a1a8b4;
 }
-/* Scrollbar handle */
 ::-webkit-scrollbar-thumb {
 	background: #c2e2ff;
 	border: solid 1px;
 	border-color: #808080;
 }
-/* Scrollbar handle on hover */
 ::-webkit-scrollbar-thumb:hover {
 	background: #e0e0e0;
-}
+}*/
+/* width */
+::-webkit-scrollbar {
+    width: .25vw;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    border-radius: .25vw;
+  }
+  
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: black; 
+    border-radius: .25vw
+  }
 
 /* CHECKBOXES
 ------------------------- */

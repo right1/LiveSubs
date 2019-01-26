@@ -2840,7 +2840,7 @@ const MSG_TYPE_USER_JOINED = 1;
 const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
 const MSG_TYPE_HARK = 4;
-
+const MSG_TYPE_USER_LEFT=5;
 const CONNECT_FAILED = 0;
 const CONNECT_JOINED = 1;
 const CONNECT_CREATED = 2;
@@ -2865,7 +2865,7 @@ var connection; // Websocket connection to server
 let protectTranslations = true;
 var gracePeriod = false;
 // var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-
+var scroll=0;//keeping track of scrollbar
 $(function () {
     // Setup some webpage extensions.
     $(".select2").select2();
@@ -2908,7 +2908,7 @@ $(function () {
                 }
 
                 messages.push(msg);
-                updateChatMessages(true);
+                updateChatMessages(true,false);
                 sendToAll(JSON.stringify(msg))
             }
         }
@@ -3022,7 +3022,7 @@ $(function () {
                     elHeight -= $('#topChat').height();
                     elHeight -= $('#chatEnter').height();
                     elHeight -= 30; // padding.
-                    $('.chatBox').css('bottom', ($('#chatEnter').height() + 5) + 'px');
+                    // $('.chatBox').css('bottom', ($('#chatEnter').height() + 10) + 'px');
                     $('.chatBox').height(elHeight);
 
                     // Clear and display welcome message for the joining user only.
@@ -3033,7 +3033,7 @@ $(function () {
                         "timestamp": Date.now()
                     });
 
-                    updateChatMessages(false);
+                    updateChatMessages(false,false);
                 }
 
                 if (data.success === CONNECT_CREATED) {
@@ -3157,9 +3157,19 @@ $(function () {
                 "timestamp": Date.now()
             });
 
-            updateChatMessages(true);
+            updateChatMessages(true,false);
         })
         p.on('stream', function (otherStream) {
+            otherStream.onended=function(e){
+                console.log(otherUsername+' stream ended');
+                console.log(e);
+            }
+            // otherStream.oniceconnectionstatechange=function(){
+            //     console.log(otherUsername+' ice state change');
+            // }
+            // otherStream.onsignalingstatechange=function(){
+            //     console.log(otherUsername+' signal state change');
+            // }
             console.log(otherStream)
             var video = document.createElement('video');
             video.id = otherUsername + "_video";
@@ -3176,6 +3186,22 @@ $(function () {
             //     $('#'+otherUsername+'_video').remove();
             // }
             video.play();
+        })
+        p.on('error',function(err){
+            //remove the video
+            $('#'+otherUsername+'_video').remove();
+            if($('#spotlight video').length==0){
+                console.log('need a new spotlight')
+                setSpotlight(true);
+            }
+            messages.push({
+                "username": otherUsername,
+                "message": "",
+                "type": MSG_TYPE_USER_LEFT,
+                "timestamp": Date.now()
+            });
+
+            updateChatMessages(true,false);
         })
 
     }
@@ -3271,7 +3297,7 @@ $(function () {
             console.log(data);
             messages.push(data);
             setSpotlight(data.username);
-            updateChatMessages(true);
+            updateChatMessages(true,false);
             // translate(data.message,{from:data.sl,to:languages[languageIndex]['translateLangCode']}).then(res => {
             //     data.message=res;
             //     messages.push(data);
@@ -3287,6 +3313,16 @@ $(function () {
 })
 
 function setSpotlight(user) {
+    if(user===true){
+        //set spotlight to first video in videoBar, then return
+        console.log('setting new spotlight...')
+        if($('#videoBar video').length >= 1){
+            let newSpotlight=$('#videoBar').children("video").first().detach();
+            $('#spotlight').prepend(newSpotlight);
+            console.log('set new spotlight.')
+        }
+        return;
+    }
     if ($('#spotlight video').length < 1 || $('#videoBar video').length < 1) {
         return;
     }
@@ -3358,8 +3394,8 @@ function setSubtitleText(text) {
     subParent.css('bottom', ($('#spotlight').height() - $('#spotlight video').height() + window.innerHeight * .035) + 'px');
 }
 
-function updateChatMessages(addToSub) {
-    if (messages.length > 0) {
+function updateChatMessages(addToSub,updateAll) {
+    if (messages.length > 0 && !updateAll) {
         let index = messages.length - 1;
 
         if (messages[index].type === MSG_TYPE_SPEECH) {
@@ -3404,7 +3440,26 @@ function updateChatMessages(addToSub) {
             messageHTML += roomName;
             messageHTML += "</strong></span>!</p>";
             $('.chatBox').html($('.chatBox').html() + messageHTML);
+        }else if(messages[index].type===MSG_TYPE_USER_LEFT){
+            //Append left message to chat
+            let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + messages[index]['username'] + "</span> left the room.</p>";
+            $('.chatBox').html($('.chatBox').html() + messageHTML);
         }
+        $('.chatBox').animate({
+            scrollTop: $('.chatBox')[0].scrollHeight}, 
+            0);
+        $( "#chatBox" ).addClass( "scroll-y" );
+        scroll++;
+        setTimeout(function(){
+            scroll--;
+            if(scroll==0){
+                $('#chatBox').removeClass('scroll-y');
+            }
+            
+        },2000)
+        //autoscroll to bottom
+    }else if(messages.length>0){
+        //push all messages to chatbox
     }
 }
 
@@ -3468,7 +3523,7 @@ function transmitSpeech(message) {
 
     // Update our message list locally.
     messages.push(msg);
-    updateChatMessages(false);
+    updateChatMessages(false,false);
 }
 },{"hark":14,"simple-peer":30}],10:[function(require,module,exports){
 (function (Buffer){
