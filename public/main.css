@@ -10,11 +10,15 @@
     z-index: 4;
     position:absolute;
     transform: scaleX(1) !important;
+    transform-origin: center;
     height: 5vh;
     width:5vh;
 
-    left: 2vw;
-    top: 20vh;
+    left: 1vw;
+    top: 19vh;
+}
+img.muteSwitch:hover{
+    cursor:pointer
 }
 .settings{
     z-index: 4;
@@ -52,15 +56,28 @@ body {
     height: calc((25vw + 30vh)/2);
         border-radius: 100%;
 }
-.column{
-    width:50% !important;
+.form-control {
+    height: calc(1.8rem + 2px) !important;
+}
+.showHidePwd {
+    height: calc(1.8rem + 2px) !important;
+    width: auto;
+    margin-left: 5px;
+}
+.card-text {
+    text-align: left;
+    float: left;
+}
+.column-labels{
+    width:45% !important;
+    padding-right:10px;
+}
+.column-right{
+    width:55% !important;
 }
 .select2-container {
     width: 100% !important;
     padding: 0;
-}
-img.muteSwitch:hover{
-    cursor:pointer
 }
 a:hover{
     cursor:pointer
@@ -70,7 +87,6 @@ a:hover{
 }
 .autocenter{
     /* display: flex; */
-    padding: 30px;
     text-align:center;
 }
 .autocenter div{
@@ -81,7 +97,7 @@ a:hover{
     color:lightgrey
 }
 .inputDark{
-    background-color:rgb(192, 192, 192);
+    background-color:#f0f0f0;
 }
 .ui-topright{
     z-index: 3;
@@ -92,8 +108,8 @@ a:hover{
     top: 3px;
 }
 .chatBox{
-   overflow-y: scroll;
    overflow-x: hidden;
+   overflow-y: auto;
 }
 .chatBoxParent{
    z-index: 3;
@@ -101,53 +117,104 @@ a:hover{
    background-color:white;
    right: 0px;
    top:0px;
-   width: 15vw;
+   width: 16vw;
+   min-width: 220px;
    height:100vh;
+}
+.chatInner {
+    margin-left: 4%;
+    margin-right: 1%;
 }
 .chatEnter{
    position:absolute;
-   width:100%;
+   width:90%;
    bottom: 5px
 }
 .chatBox p{
    margin-bottom:0;
    margin-top: 3
 }
+.chatEnterBox{
+   height:10vh;
+   width:100%;
+}
 .usernameDisplayS2T{
-   color:green;
+   color:rgb(61, 182, 45);
 }
 .usernameDisplayChat{
-   color:blue
+   color:rgb(37, 72, 231)
 }
 .usernameDisplayJoin{
-   color:red
-}
-.chatEnterBox{
-   margin-left:5%;
-   height:10vh;
-   width:90%;
+   color:#cf6339
 }
 textarea{
 resize: none;
 }
 ::-webkit-scrollbar {
-width: 5px;
+    width: 6px;
 }
 
-/* Track */
+/* Scrollbar track (background) */
 ::-webkit-scrollbar-track {
-background: #f1f1f1; 
+    background: #a1a8b4;
 }
-
-/* Handle */
+/* Scrollbar handle */
 ::-webkit-scrollbar-thumb {
-background: #888; 
+    background: #c2e2ff;
+    border: solid 1px;
+    border-color:#808080;
+}
+/* Scrollbar handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #e0e0e0;
 }
 
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-background: #555; 
+/* CHECKBOXES
+------------------------- */
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 45px;
+	height: 25px;
 }
+.switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+.slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	border-radius: 19px;
+	background-color: #a0a0a0;
+	-webkit-transition: .05s;
+	transition: .05s;
+}
+.slider:before {
+	position: absolute;
+	content: "";
+	height: 19px;
+	width: 19px;
+	left: 3px;
+	bottom: 3px;
+	border-radius: 50%;
+	background-color: white;
+	-webkit-transition: .05s;
+	transition: .05s;
+}
+input:checked+.slider {
+	background-color: #007bff;
+}
+input:checked+.slider:before {
+	-webkit-transform: translate(19px, 0px);
+	-ms-transform: translate(19px, 0px);
+	transform: translate(19px, 0px);
+}
+
 .big-video{
     text-align:center;
 }
@@ -160,8 +227,8 @@ background: #555;
   
     display: flex;
     align-items: center;
-  }
-  .floating-sub{
+}
+.floating-sub{
     color: white;
     text-shadow: -1px -1px 0 #000,
                 1px -1px 0 #000,

@@ -1,102 +1,158 @@
-var Peer = require('simple-peer');
-var hark=require('hark');
+const Peer = require('simple-peer');
+const hark = require('hark');
+
+const MSG_TYPE_WELCOME = 0;
+const MSG_TYPE_USER_JOINED = 1;
+const MSG_TYPE_CHAT = 2;
+const MSG_TYPE_SPEECH = 3;
+const MSG_TYPE_HARK = 4;
+
+const CONNECT_FAILED = 0;
+const CONNECT_JOINED = 1;
+const CONNECT_CREATED = 2;
 // const translate=require('@vitalets/google-translate-api');
 // var userInstance;//simple-peer client instance
-var roomName;//roomname to create for testing
+var roomName; //roomname to create for testing
 var isSpectator = false;
 const videoOptions = {
     video: true,
     audio: true
-}
+};
 var messages = [];
 // import adapter from 'webrtc-adapter'
-var peerInstances = {};//username: instance
+var peerInstances = {}; //username: instance
 var password;
 // var clientPeerId;
-var username;
+var username; // The local user's name.
 var muted = false;
 var languageIndex = 0; // Default to English.
-var connection;//Websocket connection to server
-var translateTo;//index of language to translate to
-let protectTranslations=true;
-var gracePeriod=false;
+var connection; //Websocket connection to server
+var translateTo; //index of language to translate to
+let protectTranslations = true;
+var gracePeriod = false;
 // var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-$(function () {
-    $(".select2").select2();
-    $('[data-toggle="tooltip"]').tooltip()
-    $('.chatBoxParent').hide();
-    var langSelects = [document.getElementById('langSelectC1'), document.getElementById('langSelectC2'), document.getElementById('langSelectJ')];
-    for (let i = 0; i < languages.length; i++) {
-        //populate language dropdown
 
-        for (var j = 0; j < langSelects.length; j++) {
+$(function () {
+    // Called once on webpage load
+
+    // Setup some webpage extensions.
+    $(".select2").select2();
+    $('[data-toggle="tooltip"]').tooltip();
+    var langDropdowns = [document.getElementById('langSelectC1'), document.getElementById('langSelectC2'), document.getElementById('langSelectJ')];
+
+    // Populate language dropdowns.
+    for (let i = 0; i < langDropdowns.length; i++) {
+        // Pull languages array from speech.js
+        for (var j = 0; j < languages.length; j++) {
             let option = document.createElement("option");
-            option.value = i;
-            option.text = languages[i].displayName;
-            langSelects[j].add(option)
+            option.value = j;
+            option.text = languages[j].displayName;
+            langDropdowns[i].add(option)
         }
-        // let html="<option value='"+i+"'>"
-        // html+=languages[i].displayName;
-        // html+="</option>";
-        // $('#langSelect').append(html);
     }
-    $(document).keypress(function(event){
+
+    // Register chat enter key callback.
+    $(document).keypress(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
-        if(keycode == '13'){
-            if($('#chatEnter').is(":focus")){
-                let msgText=$('#chatEnter').val();
+        const ENTER_KEY = 13;
+
+        if (keycode === ENTER_KEY) {
+            if ($('#chatEnter').is(":focus")) {
+                let msgText = $('#chatEnter').val();
                 $('#chatEnter').val("");
-                const msg={
+
+                let trimmedMsg = msgText.trim();
+
+                if (trimmedMsg.length == 0) {
+                    return; // don't send empty messages.
+                }
+
+                const msg = {
                     "username": username,
                     "message": msgText,
-                    "type": 1,//type 1: chat
+                    "type": MSG_TYPE_CHAT,
                     "sl": languageIndex,
                     "timestamp": Date.now()
                 }
                 messages.push(msg);
-                updateChatMessages(messages.length-1,true)
+                updateChatMessages(messages.length - 1, true)
                 sendToAll(JSON.stringify(msg))
             }
         }
     });
-    $('.login-ui').hide()
+    
     $('#langSelectC1').change(function () {
         languageIndex = $(this).children("option:selected").val();
-        if (typeof languageIndex === "string") {
-            languageIndex = parseInt(languageIndex);
-        }
-        console.log(languageIndex);
+        languageIndex = parseInt(languageIndex);
     })
     $('#langSelectJ').change(function () {
         languageIndex = $(this).children("option:selected").val();
-        if (typeof languageIndex === "string") {
-            languageIndex = parseInt(languageIndex);
-        }
-        console.log(languageIndex);
+        languageIndex = parseInt(languageIndex);
     })
+
+    $('.login-ui').hide();
+    $('.chatBoxParent').hide();
+
     $('#joinRoom').click(function () {
-        $('#login-ui_join').show()
+        $('#login-ui_join').show();
         $('.typeSelect').hide();
         $('.buttonContainer').hide();
     })
     $('#createRoom').click(function () {
-        $('#login-ui_create').show()
+        $('#login-ui_create').show();
         $('.typeSelect').hide();
         $('.buttonContainer').hide();
     })
+
+    // Password reveal setup.
+    $('#showPwdC').show();
+    $('#hidePwdC').hide();
+
+    $('#showPwdC').click(function () {
+        // Reveal password field.
+        $('#showPwdC').hide();
+        $('#hidePwdC').show();
+        $('#passwordC').attr('type', 'text');
+    })
+    $('#hidePwdC').click(function () {
+        // Hide password field.
+        $('#showPwdC').show();
+        $('#hidePwdC').hide();
+        $('#passwordC').attr('type', 'password');
+    })
+
+    $('#showPwdJ').show();
+    $('#hidePwdJ').hide();
+
+    $('#showPwdJ').click(function () {
+        // Reveal password field.
+        $('#showPwdJ').hide();
+        $('#hidePwdJ').show();
+        $('#passwordJ').attr('type', 'text');
+    })
+    $('#hidePwdJ').click(function () {
+        // Hide password field.
+        $('#showPwdJ').show();
+        $('#hidePwdJ').hide();
+        $('#passwordJ').attr('type', 'password');
+    })
+
     $('#muteSwitch_muted').hide();
     $('#muteSwitch_unmuted').hide();
+
+    // Some sort of thing.
     navigator.mediaDevices.getUserMedia(videoOptions).then(function (stream) {
-        gotMedia(stream)
-    })
-        .catch(function (err) {
-            //Start in spectator mode
-            startConnection(false);
-            isSpectator = true;
-            $('.spectate').hide();
-            console.error(err)
-        });
+        gotMedia(stream);
+    }).catch(function (err) {
+        // Start in spectator mode if we failed to get user media.
+        startConnection(false);
+        isSpectator = true;
+        $('.spectate').hide();
+        console.error(err)
+    });
+
     window.WebSocket = window.WebSocket || window.MozWebSocket;
+
     function gotMedia(stream) {
         var video = document.getElementById('self');
         video.srcObject = stream;
@@ -104,12 +160,11 @@ $(function () {
         video.play();
         startConnection(stream);
         // userInstance=new Peer({initiator: true,stream: stream})
-
     }
+
     function startConnection(stream) {
         connection = new WebSocket('wss://localhost');
         // connection.onopen=function(){
-
         // }
 
         connection.onerror = function (error) {
@@ -119,44 +174,67 @@ $(function () {
             var data = JSON.parse(message.data)
             console.log(data)
             if (data.type === 'roomCreation') {
-                if (data.success >= 1) {
+                if (data.success === CONNECT_JOINED || data.success === CONNECT_CREATED) {
+                    // Created or joined the room
+
+                    // Begin speech recognition.
                     beginSpeechRecognition();
+
+                    // Setup chat area.
                     $('.chatBoxParent').show();
                     $('#roomDisplay').text(data.roomName);
                     $('#languageDisplay').text(languages[languageIndex]['displayName']);
-                    let elHeight=$( window ).height();
-                    elHeight-=$('#topChat').height();
-                    elHeight-=$('#chatEnter').height();
-                    elHeight-=12;
+                    let elHeight = $(window).height();
+                    elHeight -= $('#topChat').height();
+                    elHeight -= $('#chatEnter').height();
+                    elHeight -= 30; // padding.
+                    $('.chatBox').css('bottom', ($('#chatEnter').height() + 5) + 'px');
                     $('.chatBox').height(elHeight);
+
+                    // Display welcome message for the joining user only.
+                    messages.push({
+                        "username": username,
+                        "message": "",
+                        "type": MSG_TYPE_WELCOME,
+                        "timestamp": Date.now()
+                    });
                 }
-                if (data.success === 2) {
+
+                if (data.success === CONNECT_CREATED) {
+                    // Created the room.
                     // userInstance=new Peer({initiator: true,trickle:false,stream: stream})
-                    loadjscssfile("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
+                    loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
-                } else if (data.success === 1) {
+                } else if (data.success === CONNECT_JOINED) {
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     $('.login-ui').hide();
                     translateTo = data.translateTo;
-                    loadjscssfile("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
+                    loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     for (var i = 0; i < data.usernames.length; i++) {
                         let newPeer;
-                        if (stream&&!isSpectator) {
-                            newPeer = new Peer({ stream: stream });//this peer will wait for signal before doing anything.
+                        if (stream && !isSpectator) {
+                            newPeer = new Peer({
+                                stream: stream
+                            }); //this peer will wait for signal before doing anything.
                         } else {
                             newPeer = new Peer();
                         }
                         peerSetup(newPeer, false, data.usernames[i])
                     }
-                } else if (data.success === 0) {
+                } else if (data.success === CONNECT_FAILED) {
                     $('.connectionErrorMsg').text(data.message);
                 }
             } else if (data.type === 'newUser') {
                 let newPeer;
-                if (stream&&!isSpectator) {
-                    newPeer = new Peer({ stream: stream, initiator: true });
+                if (stream && !isSpectator) {
+                    newPeer = new Peer({
+                        stream: stream,
+                        initiator: true
+                    });
                 } else {
-                    newPeer = new Peer({ initiator: true });
+                    newPeer = new Peer({
+                        initiator: true
+                    });
                 }
                 peerSetup(newPeer, true, data.username)
 
@@ -186,9 +264,9 @@ $(function () {
             })
             $('#selfContainer').mouseleave(function () {
                 if (muted) {
-                    $('#muteSwitch_muted').hide(100)
+                    $('#muteSwitch_muted').hide(75);
                 } else {
-                    $('#muteSwitch_unmuted').hide(100)
+                    $('#muteSwitch_unmuted').hide(75);
                 }
             })
             var speechEvents = hark(stream, {});
@@ -196,19 +274,22 @@ $(function () {
                 const harkMsg = {
                     "username": username,
                     "message": false,
-                    "type": 3,//type 3: hark
+                    "type": MSG_TYPE_HARK,
                     "sl": languageIndex,
                     "timestamp": Date.now()
                 };
                 sendToAll(JSON.stringify(harkMsg));
             });
         }
-
     }
+
     function peerSetup(p, init, otherUsername) {
         // newPeer.signal(signalData);
         p.on('data', onDataReceived)
-        peerInstances[otherUsername] = { "init": init, "peer": p }
+        peerInstances[otherUsername] = {
+            "init": init,
+            "peer": p
+        }
         p.on('signal', function (data) {
             data = JSON.stringify(data);
             console.log('signal')
@@ -223,25 +304,27 @@ $(function () {
             }))
         })
         p.on('connect', function (data) {
+            // New user joined
             messages.push({
                 "username": otherUsername,
-                "message": "connected",
-                "type": 0,//type 0: new user joined
+                "message": "joined the room!",
+                "type": MSG_TYPE_USER_JOINED,
                 "timestamp": Date.now()
-            })
-            updateChatMessages(messages.length-1,true)
+            });
+
+            updateChatMessages(messages.length - 1, true);
         })
         p.on('stream', function (otherStream) {
             console.log(otherStream)
             var video = document.createElement('video');
             video.id = otherUsername + "_video";
-            if($("#spotlight video").length==0){
+            if ($("#spotlight video").length == 0) {
                 $('#spotlight').prepend(video);
-                $('#subtitleParent').css("width",$('#spotlight video').width())
-            }else{
+                $('#subtitleParent').css("width", $('#spotlight video').width())
+            } else {
                 document.getElementById('videoBar').appendChild(video);
             }
-            
+
             video.srcObject = otherStream;
             // video.onended=function(){
             //     console.log(otherUsername+' video ended')
@@ -251,6 +334,17 @@ $(function () {
         })
 
     }
+
+    $('#backC').click(backToMainMenu);
+    $('#backJ').click(backToMainMenu);
+
+    function backToMainMenu() {
+        $('#login-ui_create').hide();
+        $('#login-ui_join').hide();
+        $('.typeSelect').show();
+        $('.buttonContainer').show();
+    }
+
     $('#connectC').click(function () {
         username = $('#usernameC').val();
         roomName = $('#roomNameC').val();
@@ -258,7 +352,7 @@ $(function () {
         let languages = [languageIndex, 0];
         languages[1] = $('#langSelectC2').children("option:selected").val();
         if (typeof languages[1] === "string") {
-            languages[1]= parseInt(languages[1]);
+            languages[1] = parseInt(languages[1]);
         }
         translateTo = languages[1];
         if ($('#spectateC').is(":checked")) {
@@ -274,9 +368,8 @@ $(function () {
         if (username.length > 0 && roomName.length > 0) {
             connection.send(datatosend)
         }
+    });
 
-    })
-    $('')
     $('#connectJ').click(function () {
         username = $('#usernameJ').val();
         roomName = $('#roomNameJ').val();
@@ -294,16 +387,16 @@ $(function () {
         if (username.length > 0 && roomName.length > 0) {
             connection.send(datatosend)
         }
+    });
 
-    })
-    $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function() {
-        var lang=$(".yt-button__text").text();
-        if(lang.toLowerCase()!==languages[languageIndex]['translateLangCode']){
-            protectTranslations=false;
-        }else{
-            protectTranslations=true;
+    $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function () {
+        var lang = $(".yt-button__text").text();
+        if (lang.toLowerCase() !== languages[languageIndex]['translateLangCode']) {
+            protectTranslations = false;
+        } else {
+            protectTranslations = true;
         }
-        console.log(lang,languages[languageIndex]['translateLangCode'],protectTranslations);
+        console.log(lang, languages[languageIndex]['translateLangCode'], protectTranslations);
     });
     // $('#send').click(function () {
     //     sendToAll(JSON.stringify({
@@ -328,12 +421,12 @@ $(function () {
 
     function onDataReceived(data) {
         data = JSON.parse(data);
-        if (data.type === 2 || data.type===1) {
+        if (data.type === MSG_TYPE_CHAT || data.type === MSG_TYPE_SPEECH) {
             //translate the message
             console.log(data);
             messages.push(data);
             setSpotlight(data.username);
-            updateChatMessages(messages.length - 1,true);
+            updateChatMessages(messages.length - 1, true);
             // translate(data.message,{from:data.sl,to:languages[languageIndex]['translateLangCode']}).then(res => {
             //     data.message=res;
             //     messages.push(data);
@@ -342,48 +435,54 @@ $(function () {
             // })
 
         }
-        if(data.type===3 && !gracePeriod){//hark
+        if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
             setSpotlight(data.username);
         }
     }
 })
-function setSpotlight(user){
-    if($('#spotlight video').length<1 || $('#videoBar video').length<1)return;
-    
+
+function setSpotlight(user) {
+    if ($('#spotlight video').length < 1 || $('#videoBar video').length < 1) {
+        return;
+    }
+
     let newSpotlight = $('#' + user + "_video").detach();
-    if($('#spotlight video').length==1)$('#subtitle').text('');//resetting subtitle if the spotlight is cast to a different user.
+    if ($('#spotlight video').length == 1) $('#subtitle').text(''); //resetting subtitle if the spotlight is cast to a different user.
     let oldSpotlight = $('#spotlight').children("video").detach();
     // Swap places with spotlight and small video.
     $('#spotlight').prepend(newSpotlight);
     $('#videoBar').append(oldSpotlight);
-    $('#subtitleParent').css("width",$('#spotlight video').width())
+    $('#subtitleParent').css("width", $('#spotlight video').width());
 }
-function loadjscssfile(filename, filetype) {
+
+function loadJsCssFiles(filename, filetype) {
     if (filetype == "js") { //if filename is a external JavaScript file
-        var fileref = document.createElement('script')
-        fileref.setAttribute("type", "text/javascript")
-        fileref.setAttribute("src", filename)
+        var fileref = document.createElement('script');
+        fileref.setAttribute("type", "text/javascript");
+        fileref.setAttribute("src", filename);
     }
     else if (filetype == "css") { //if filename is an external CSS file
-        var fileref = document.createElement("link")
-        fileref.setAttribute("rel", "stylesheet")
-        fileref.setAttribute("type", "text/css")
+        var fileref = document.createElement("link");
+        fileref.setAttribute("rel", "stylesheet");
+        fileref.setAttribute("type", "text/css");
         fileref.setAttribute("href", filename)
     }
     if (typeof fileref != "undefined")
         document.getElementsByTagName("head")[0].appendChild(fileref)
 }
+
 function sendToAll(data) {
     //send data as string buffer shit isn't really working .stringify if necessary
-    console.log(peerInstances);
+    console.log('Sending to peer instances:', peerInstances);
     for (var i in peerInstances) {
         var val = peerInstances[i];
         val['peer'].send(data);
     }
 }
+
 function setSubtitleText(text) {
     let maxSubChars = languages[languageIndex].maxSubtitleChars;
-    const subtitle=document.getElementById('subtitle');
+    const subtitle = document.getElementById('subtitle');
     let fullText = subtitle.textContent;
 
     if (fullText.length > 0) {
@@ -398,8 +497,8 @@ function setSubtitleText(text) {
         // Prepend ellipsis when previous sentences are cut off.
         fullText = '...' + fullText.substr(fullText.length - maxSubChars, fullText.length);
     }
-    console.log('updated to: '+fullText);
-    
+    console.log('updated to: ' + fullText);
+
     subtitle.textContent = fullText;
     let subParent = $('#subtitleParent');
     let curFontSize = 32;
@@ -408,50 +507,49 @@ function setSubtitleText(text) {
 
     while (subParent.height() > targetSubtitleHeight) {
         subParent.css('font-size', curFontSize);
-        curFontSize-=2;
+        curFontSize -= 2;
     }
     // Automatically anchor subtitles to bottom of spotlight video.
-    subParent.css('bottom', ($('#spotlight').height()-$('#spotlight video').height() +window.innerHeight*.035) + 'px');
+    subParent.css('bottom', ($('#spotlight').height() - $('#spotlight video').height() + window.innerHeight * .035) + 'px');
 }
-function updateChatMessages(index,sub) {
-    if(index>-1){
-        if(messages[index].type===2){
-            var messageHTML="<p "
-            if(messages[index].sl==languageIndex&&protectTranslations){
-                messageHTML+='translate="no" '
+
+function updateChatMessages(index, sub) {
+    if (index > -1) {
+        if (messages[index].type === MSG_TYPE_SPEECH) {
+            var messageHTML = "<p "
+            if (messages[index].sl == languageIndex && protectTranslations) {
+                messageHTML += 'translate="no" '
             }
-            messageHTML+="><span class='usernameDisplayS2T' translate='no'>" + messages[index]['username'] + ": </span>";
+            messageHTML += "><span class='usernameDisplayS2T' translate='no'>" + messages[index]['username'] + ": </span>";
             messageHTML += messages[index]['message'] + '</p>';
-            $('.chatBox').html($('.chatBox').html()+ messageHTML);
-            if(sub){
+            $('.chatBox').html($('.chatBox').html() + messageHTML);
+            if (sub) {
                 setSubtitleText(messages[index]['message']);
-            gracePeriod = true;
-            setTimeout(function () {
-                gracePeriod = false;
-            }, 1000)
+                gracePeriod = true;
+                setTimeout(function () {
+                    gracePeriod = false;
+                }, 1000)
             }
-        }
-        else if(messages[index].type===1){
-            var messageHTML="<p "
-            if(messages[index]['sl']===languageIndex){
-                messageHTML+='translate="no" '
+        } else if (messages[index].type === MSG_TYPE_CHAT) {
+            var messageHTML = "<p "
+            if (messages[index]['sl'] === languageIndex) {
+                messageHTML += 'translate="no" '
             }
-            messageHTML+="><span class='usernameDisplayChat'>" + messages[index]['username'] + ": </span>";
+            messageHTML += "><span class='usernameDisplayChat'>" + messages[index]['username'] + ": </span>";
             messageHTML += messages[index]['message'] + '</p>';
-            $('.chatBox').html($('.chatBox').html()+ messageHTML);
-        }
-        else if(messages[index].type===0){
+            $('.chatBox').html($('.chatBox').html() + messageHTML);
+        } else if (messages[index].type === MSG_TYPE_USER_JOINED) {
             var messageHTML = "<p><span class='usernameDisplayJoin'>" + messages[index]['username'] + " </span>";
             messageHTML += messages[index]['message'] + '</p>'
-            $('.chatBox').html($('.chatBox').html()+ messageHTML);
+            $('.chatBox').html($('.chatBox').html() + messageHTML);
         }
     }
-    console.log('called update chat')
-    
-}
-function beginSpeechRecognition() {
-    console.log('began');
 
+    console.log('called update chat')
+}
+
+function beginSpeechRecognition() {
+    console.log('Began speech recognition');
     window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
 
     const recognition = new window.SpeechRecognition();
@@ -459,12 +557,12 @@ function beginSpeechRecognition() {
         const speechToText = event.results[0][0].transcript;
         transmitSpeech(speechToText);
     }
-    recognition.onaudiostart = function (event) {
-    }
+    recognition.onaudiostart = function (event) { }
     recognition.onaudioend = function (event) {
         recognition.stop();
         startRecognition(25);
     }
+
     function startRecognition(delay) {
         setTimeout(function () {
             try {
@@ -500,7 +598,7 @@ function transmitSpeech(message) {
     var msg = {
         "username": username,
         "message": message,
-        "type": 2,//type 2:speech recognition.
+        "type": MSG_TYPE_SPEECH,
         "sl": languageIndex,
         "timestamp": Date.now()
     };
@@ -510,6 +608,5 @@ function transmitSpeech(message) {
 
     // Update our message list locally.
     messages.push(msg);
-    updateChatMessages(messages.length - 1,false);
+    updateChatMessages(messages.length - 1, false);
 }
-

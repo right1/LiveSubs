@@ -1,6 +1,5 @@
-// var activeRooms = require("./activeRooms.json");
 var activeRooms = {};
-const languages=require("./languages.json")['languages'];
+const languages = require("./languages.json")['languages'];
 //var WebSocketServer = require('ws').server;
 const WebSocket = require('ws');
 const http = require('http');
@@ -20,15 +19,24 @@ var credentials = { key: privateKey, cert: certificate };
 var app = express();
 app.use((req, res) => {
     if (req.secure) {
-        if (req.url === "/bundle.js") {
-            res.sendFile(`${__dirname}/public/bundle.js`);
-        }else if(req.url==="/speech.js"){
-            res.sendFile(`${__dirname}/public/speech.js`);
-        }else if(req.url==="/main.css"){
-            res.sendFile(`${__dirname}/public/main.css`);
+        if (req.url === "/") {
+            // Send webpage html
+            res.sendFile(`${__dirname}/public/index.html`);
+        }
+        else if (req.url === "/favicon.ico") {
+            // Send favicon
+            res.sendFile(`${__dirname}/public/favicon.ico`);
         }
         else {
-            res.sendFile(`${__dirname}/public/index.html`);
+            // Automatically send JS and CSS files in public folder.
+            if (req.url.endsWith('.js') || req.url.endsWith('.css')) {
+                let fullPath = `${__dirname}/public` + req.url;
+                // console.log('sent ' + fullPath);
+                res.sendFile(fullPath);
+            }
+            else {
+                console.log('NOT SENDING ' + req.url);
+            }
         }
 
     }
@@ -92,7 +100,7 @@ function createRoom(data, connectionInstance) {
     }
     else {
         var usernames = Object.keys(activeRooms[data.roomName]["connections"]);
-        const roomLanguages=activeRooms[data.roomName]['languages']
+        const roomLanguages = activeRooms[data.roomName]['languages']
         if (activeRooms[data.roomName]['password'] !== data.password) {
             connectionInstance.send(JSON.stringify({
                 "type": "roomCreation",
@@ -110,18 +118,18 @@ function createRoom(data, connectionInstance) {
                 "usernames": usernames
             }));
             return;
-        }else if(roomLanguages[0]!==data.language && roomLanguages[1]!==data.language){
+        } else if (roomLanguages[0] !== data.language && roomLanguages[1] !== data.language) {
             connectionInstance.send(JSON.stringify({
                 "type": "roomCreation",
                 "success": FAILED,
-                "message": "This room only supports "+languages[roomLanguages[0]]['displayName']+" and "+languages[roomLanguages[1]]['displayName']+"."
+                "message": "This room only supports " + languages[roomLanguages[0]]['displayName'] + " and " + languages[roomLanguages[1]]['displayName'] + "."
             }));
             return;
         }
-        let otherLanguage=-1;
-        for(let i=0;i<roomLanguages.length;i++){
-            if(roomLanguages[i]!=data.language){
-                otherLanguage=roomLanguages[i]
+        let otherLanguage = -1;
+        for (let i = 0; i < roomLanguages.length; i++) {
+            if (roomLanguages[i] != data.language) {
+                otherLanguage = roomLanguages[i];
             }
         }
         connectionInstance.send(JSON.stringify({ "type": "roomCreation", "roomName": data.roomName, "success": JOINED, "message": "added you to room", "usernames": usernames, "translateTo": otherLanguage }));
