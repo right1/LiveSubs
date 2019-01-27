@@ -3033,8 +3033,8 @@ $(function () {
     }
 
     function startConnection(stream) {
-        connection = new WebSocket('wss://localhost'); // local testing
-        // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
+        //connection = new WebSocket('wss://localhost'); // local testing
+        connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
 
         // connection.onopen=function(){
         // }
@@ -3381,6 +3381,7 @@ function setSpotlight(user) {
         if ($('#videoBar video').length >= 1) {
             let newSpotlight = $('#videoBar').children("video").first().detach();
             $('#spotlight').prepend(newSpotlight);
+            $('#subtitle').text('');
             console.log('set new spotlight.')
         }
         return;
