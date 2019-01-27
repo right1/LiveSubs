@@ -18,7 +18,14 @@ let privateKey = fs.readFileSync('credentials_testing/key.pem');
 let certificate = fs.readFileSync('credentials_testing/cert.pem');
 var credentials = { key: privateKey, cert: certificate };
 
-var app = express();
+const app = express();
+
+// Set 'public' folder as root
+app.use(express.static('public'));
+// Provide access to node_modules folder from the client-side
+app.use('/scripts', express.static(`${__dirname}/node_modules/`));
+
+// Send website files and redirect.
 app.use((req, res) => {
     if (req.secure) {
         if (req.url === "/") {
@@ -40,10 +47,9 @@ app.use((req, res) => {
                 console.log('NOT SENDING ' + req.url);
             }
         }
-
     }
     else {
-        console.log('redirected');
+        console.log('redirecting to https://' + req.headers.host + req.url);
         res.redirect('https://' + req.headers.host + req.url);
     }
 });
