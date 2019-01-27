@@ -435,7 +435,28 @@ $(function () {
             connection.send(payload);
         }
     });
+    $('#downloadBtn').click(function(){
+        var msgString="";
+        // var timeZoneOffset=new Date().getTimezoneOffset() * 60 * 1000 //minutes -> ms
+        // timeZoneOffset=0-timeZoneOffset;
+        for(let i=0;i<messages.length;i++){
+            if(messages[i].type===MSG_TYPE_SPEECH || messages[i].type===MSG_TYPE_CHAT){
+                // let localTime=messages[i].timestamp + timeZoneOffset;
+                let d=new Date(messages[i].timestamp);
+                msgString+="[";
+                msgString+=d.toLocaleString('en-US',{});
+                msgString+='] ';
+                msgString+=messages[i].username;
+                msgString+=': ';
+                msgString+=messages[i].message.replace(/\n/g,"");
+                msgString+='\r\n';
+            }
 
+        }
+        msgString="data:text/plain;charset=UTF-8,"+encodeURIComponent(msgString);
+        this.download=roomName+"_chat (LiveSubs).txt";
+        this.href =  msgString;
+    })
     $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function () {
         var lang = $(".yt-button__text").text();
         if (lang.toLowerCase() !== languages[languageIndex]['translateLangCode']) {

@@ -117,7 +117,9 @@ function createRoom(data, connectionInstance) {
         return;
     }
 
-    connectionInstance.on('close', onClose)
+    connectionInstance.on('close', function(connection){
+        onClose(connection,data);
+    })
 }
 function joinRoom(data, connectionInstance) {
     
@@ -187,10 +189,12 @@ function joinRoom(data, connectionInstance) {
     }
     activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
     console.log(data.username + ' joined ' + data.roomName);
-    connectionInstance.on('close', onClose)
+    connectionInstance.on('close', function(connection){
+        onClose(connection,data);
+    })
 
 }
-function onClose(connection){
+function onClose(connection,data){
     delete activeRooms[data.roomName]['connections'][data.username];
 
     if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {
