@@ -3033,8 +3033,8 @@ $(function () {
     }
 
     function startConnection(stream) {
-        //connection = new WebSocket('wss://localhost'); // local testing
-        connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
+        connection = new WebSocket('wss://localhost'); // local testing
+        // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
 
         // connection.onopen=function(){
         // }
@@ -3228,6 +3228,13 @@ $(function () {
         })
         p.on('error', function (err) {
             //remove the video
+            userLeft();
+            
+        });
+        p.on('close',function(){
+            userLeft();
+        })
+        function userLeft(){
             $('#' + otherUsername + '_video').remove();
             if ($('#spotlight video').length == 0) {
                 console.log('need a new spotlight')
@@ -3241,7 +3248,7 @@ $(function () {
             });
 
             updateChatMessages(true, false);
-        })
+        }
 
     }
 
@@ -3450,7 +3457,9 @@ function setSubtitleText(text) {
         curFontSize -= 2;
     }
     // Automatically anchor subtitles to bottom of spotlight video.
+    $('#subtitleParent').css("width", $('#spotlight video').width())
     subParent.css('bottom', ($('#spotlight').height() - $('#spotlight video').height() + window.innerHeight * .035) + 'px');
+    $('#subtitleParent').css("width", $('#spotlight video').width())
 }
 
 function updateChatMessages(addToSub, updateAll) {
