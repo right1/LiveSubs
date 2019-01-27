@@ -3,44 +3,47 @@
 
 <head>
     <meta charset="utf-8">
-    <title>LiveSubs | Video Chat Made Universal</title>
+    <title>LiveSubs | Real-time Translated Video Chat</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
         crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css"/>
-    <link rel="stylesheet" href="main.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css" />
+    <link rel="stylesheet" href="main.css" />
 
 <body>
-    </div> -->
     <div class="vertical-center buttonContainer">
         <div class="container">
+            <img id="titleBanner" class="titleBannerImg imgNoInteract" src="https://i.imgur.com/6jMdBxF.png">
+
             <div class="row">
                 <div class="span6" style="float: none; margin: 0 auto;">
                     <button class="btn btn-primary typeSelectBtn" id="createRoom">
-                        <img src="https://i.imgur.com/KfE1lSM.png" style="width:95%">
+                        <img class="imgNoInteract" src="https://i.imgur.com/KfE1lSM.png" style="width:95%">
                     </button>
                 </div>
                 <div class="span6" style="float: none; margin: 0 auto;">
                     <button class="btn btn-secondary typeSelectBtn" style="background-color:#4f8f43;" id="joinRoom">
-                        <img src="https://i.imgur.com/sOwfAsx.png" style="width:95%">
+                        <img class="imgNoInteract" src="https://i.imgur.com/sOwfAsx.png" style="width:95%">
                     </button>
                 </div>
             </div>
+
+            <div style="height:20vh;"></div>
         </div>
     </div>
 
-    <div id="login-ui_create" class="login-ui">
+    <div id="login-ui_create" class="login-ui container">
         <div class="col-12 col-lg-8 col-xl-4">
+            <img class="titleBannerImg imgNoInteract" src="https://i.imgur.com/6jMdBxF.png">
+
             <div class="card" style="width:100%">
                 <div class="card-body autocenter">
-                    <h3 class="card-title">LiveSubs</h3>
                     <div class="row">
                         <div class="column-labels">
                             <span class="card-text">Room Name:</span>
                         </div>
                         <div class="column-right">
-                            <input type="text" class="form-control inputDark" data-lpignore=true
-                                id="roomNameC">
+                            <input type="text" class="form-control inputDark" data-lpignore=true id="roomNameC">
                         </div>
                     </div>
 
@@ -117,11 +120,12 @@
         </div>
 
     </div>
-    <div id="login-ui_join" class="login-ui">
+    <div id="login-ui_join" class="login-ui container">
         <div class="col-12 col-lg-8 col-xl-4">
+            <img class="titleBannerImg imgNoInteract" src="https://i.imgur.com/6jMdBxF.png">
+
             <div class="card" style="width:100%">
                 <div class="card-body autocenter">
-                    <h3 class="card-title">LiveSubs</h3>
                     <div class="row">
                         <div class="column-labels">
                             <span class="card-text">Room Name:</span>
@@ -139,8 +143,8 @@
                             <div class="input-group">
                                 <input type="password" class="form-control inputDark" data-lpignore=true placeholder="(optional)"
                                     id="passwordJ">
-                                <a><img id="showPwdJ" class="showHidePwd input-group-addon" src="https://cdn1.iconfinder.com/data/icons/jumpicon-basic-ui-glyph-1/32/-_Eye-Show-View-Watch-See-64.png"></a>
-                                <a><img id="hidePwdJ" class="showHidePwd input-group-addon" src="https://cdn1.iconfinder.com/data/icons/jumpicon-basic-ui-glyph-1/32/-_Eye-Show-View-Watch-See-Disable-Inactive-Unavailable-Off-64.png"></a>
+                                <a><img id="showPwdJ" class="showHidePwd input-group-addon imgNoInteract" src="https://cdn1.iconfinder.com/data/icons/jumpicon-basic-ui-glyph-1/32/-_Eye-Show-View-Watch-See-64.png"></a>
+                                <a><img id="hidePwdJ" class="showHidePwd input-group-addon imgNoInteract" src="https://cdn1.iconfinder.com/data/icons/jumpicon-basic-ui-glyph-1/32/-_Eye-Show-View-Watch-See-Disable-Inactive-Unavailable-Off-64.png"></a>
                             </div>
                         </div>
                     </div>
@@ -197,8 +201,7 @@
     </div>
     <div id="selfContainer">
         <video id="self" class="userCamera" muted></video>
-        <a><img id="muteSwitch_unmuted" class="muteSwitch" src="https://i.imgur.com/qs6sclX.png" alt="Mute"></a>
-        <a><img id="muteSwitch_muted" class="muteSwitch" src="https://i.imgur.com/KOZH7m7.png" alt="Unmute"></a>
+        <a><img id="muteSwitch" class="muteSwitch" src="https://i.imgur.com/qs6sclX.png" alt="Toggle Mute"></a>
     </div>
 
     <div id="videoBar" class="videoBar">
@@ -222,7 +225,8 @@
         </div>
     </div>
 
-    <img id="settingsBtn" data-toggle="modal" data-target="#settingsMenu" class="settings hoverPointer" src="https://cdn4.iconfinder.com/data/icons/web-ui-color/128/Settings-256.png">
+    <img id="settingsBtn" class="settings hoverPointer" data-toggle="modal" data-target="#settingsMenu"
+        src="https://cdn4.iconfinder.com/data/icons/web-ui-color/128/Settings-128.png">
 
     <!-- Modals -->
     <div class="modal fade" id="settingsMenu" tabindex="-1" role="dialog">

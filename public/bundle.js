@@ -2840,7 +2840,7 @@ const MSG_TYPE_USER_JOINED = 1;
 const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
 const MSG_TYPE_HARK = 4;
-const MSG_TYPE_USER_LEFT=5;
+const MSG_TYPE_USER_LEFT = 5;
 const CONNECT_FAILED = 0;
 const CONNECT_JOINED = 1;
 const CONNECT_CREATED = 2;
@@ -2858,14 +2858,14 @@ var password;
 // var clientPeerId;
 var username; // The local user's name.
 var roomName; // our current room name.
-var muted = false;
 var languageIndex = 0; // Default to English.
 var translateTo = 0; // Index of language to translate to
 var connection; // Websocket connection to server
 let protectTranslations = true;
 var gracePeriod = false;
+var muted = false;
 // var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-var scroll=0;//keeping track of scrollbar
+var scroll = 0;//keeping track of scrollbar
 $(function () {
     // Setup some webpage extensions.
     $(".select2").select2();
@@ -2908,7 +2908,7 @@ $(function () {
                 }
 
                 messages.push(msg);
-                updateChatMessages(true,false);
+                updateChatMessages(true, false);
                 sendToServer(msg);
                 sendToAll(JSON.stringify(msg))
             }
@@ -2929,20 +2929,51 @@ $(function () {
 
     // Callbacks: Show login menus and hide buttons.
     $('#createRoom').click(function () {
-        $('#login-ui_create').show();
-        $('.typeSelect').hide();
-        $('.buttonContainer').hide();
+        playAnimation('joinRoom', 'zoomOut', 'fast', null);
+
+        playAnimation('createRoom', 'bounce', 'fast', function () {
+            $('#login-ui_create').show();
+            playAnimation('login-ui_create', 'zoomIn', 'faster', null);
+            $('.typeSelect').hide();
+            $('.buttonContainer').hide();
+        });
     });
     $('#joinRoom').click(function () {
-        $('#login-ui_join').show();
-        $('.typeSelect').hide();
-        $('.buttonContainer').hide();
+        playAnimation('createRoom', 'zoomOut', 'fast', null);
+
+        playAnimation('joinRoom', 'bounce', 'fast', function () {
+            $('#login-ui_join').show();
+            playAnimation('login-ui_join', 'zoomIn', 'faster', null);
+            $('.typeSelect').hide();
+            $('.buttonContainer').hide();
+        });
     });
 
+    // Back to main menu (from login screen) animations.
+    $('#backC').click(function () {
+        playAnimation('login-ui_create', 'zoomOut', 'faster', function () {
+            $('#login-ui_create').hide();
+            displayMainMenuButtons();
+        });
+    });
+    $('#backJ').click(function () {
+        playAnimation('login-ui_join', 'zoomOut', 'faster', function () {
+            $('#login-ui_join').hide();
+            displayMainMenuButtons();
+        });
+    });
+
+    function displayMainMenuButtons() {
+        $('.typeSelect').show();
+        $('.buttonContainer').show();
+        playAnimation('titleBanner', 'fadeIn', 'faster', null);
+        playAnimation('createRoom', 'zoomIn', 'faster', null);
+        playAnimation('joinRoom', 'zoomIn', 'faster', null);
+    }
+
     // Play animations for main menu.
-    playAnimation('settingsBtn', 'rollIn', null);
-    playAnimation('createRoom', 'rollIn', null);
-    playAnimation('joinRoom', 'rollIn', null);
+    playAnimation('settingsBtn', 'rollIn', 'fast', null);
+    displayMainMenuButtons();
 
     // Password reveal setup.
     $('#showPwdC').show();
@@ -2953,13 +2984,13 @@ $(function () {
         $('#showPwdC').hide();
         $('#hidePwdC').show();
         $('#passwordC').attr('type', 'text');
-    })
+    });
     $('#hidePwdC').click(function () {
         // Hide password field.
         $('#showPwdC').show();
         $('#hidePwdC').hide();
         $('#passwordC').attr('type', 'password');
-    })
+    });
 
     $('#showPwdJ').show();
     $('#hidePwdJ').hide();
@@ -2969,16 +3000,15 @@ $(function () {
         $('#showPwdJ').hide();
         $('#hidePwdJ').show();
         $('#passwordJ').attr('type', 'text');
-    })
+    });
     $('#hidePwdJ').click(function () {
         // Hide password field.
         $('#showPwdJ').show();
         $('#hidePwdJ').hide();
         $('#passwordJ').attr('type', 'password');
-    })
+    });
 
-    $('#muteSwitch_muted').hide();
-    $('#muteSwitch_unmuted').hide();
+    $('#muteSwitch').hide();
 
     // Some sort of thing.
     navigator.mediaDevices.getUserMedia(videoOptions).then(function (stream) {
@@ -2999,6 +3029,7 @@ $(function () {
         // video.load();
         video.play();
         startConnection(stream);
+        $('#muteSwitch').show();
         // userInstance=new Peer({initiator: true,stream: stream})
     }
 
@@ -3040,7 +3071,7 @@ $(function () {
                         "timestamp": Date.now()
                     });
 
-                    updateChatMessages(false,false);
+                    updateChatMessages(false, false);
                 }
 
                 if (data.success === CONNECT_CREATED) {
@@ -3049,13 +3080,13 @@ $(function () {
                     loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
                 } else if (data.success === CONNECT_JOINED) {
-                    messages=data.chat;
-                    updateChatMessages(false,true);
+                    messages = data.chat;
+                    updateChatMessages(false, true);
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     $('.login-ui').hide();
                     translateTo = data.translateTo;
 
-                    if(translateTo == -1) {
+                    if (translateTo == -1) {
                         // If we get code -1, then it's most likely that the 2 room languages are the same somehow.
                         // In this case, fallback to user's selected language so we don't get index out of range.
                         translateTo = languageIndex;
@@ -3073,7 +3104,7 @@ $(function () {
                         }
                         peerSetup(newPeer, false, data.usernames[i])
                     }
-                    
+
                 } else if (data.success === CONNECT_FAILED) {
                     // TODO: Use bootstrap notify.
                     $('.connectionErrorMsg').text(data.message);
@@ -3098,32 +3129,28 @@ $(function () {
             }
         }
         if (stream) {
-            $('#muteSwitch_muted').click(function () {
-                muted = false;
-                $('#muteSwitch_unmuted').show();
-                $('#muteSwitch_muted').hide();
-                stream.getAudioTracks()[0].enabled = true;
-            })
-            $('#muteSwitch_unmuted').click(function () {
-                muted = true;
-                stream.getAudioTracks()[0].enabled = false;
-                $('#muteSwitch_muted').show();
-                $('#muteSwitch_unmuted').hide();
-            })
+            // Toggle mute state.
+            $('#muteSwitch').click(function () {
+                if (muted) {
+                    muted = false;
+                    $('#muteSwitch').attr('src', 'https://i.imgur.com/qs6sclX.png'); // Unmuted icon.
+                    stream.getAudioTracks()[0].enabled = true;
+                }
+                else {
+                    muted = true;
+                    stream.getAudioTracks()[0].enabled = false;
+                    $('#muteSwitch').attr('src', 'https://i.imgur.com/KOZH7m7.png'); // Muted icon.
+                }
+            });
+
+            // Autohide mute switch.
             $('#selfContainer').mouseenter(function () {
-                if (muted) {
-                    $('#muteSwitch_muted').show()
-                } else {
-                    $('#muteSwitch_unmuted').show()
-                }
-            })
+                $('#muteSwitch').show();
+            });
             $('#selfContainer').mouseleave(function () {
-                if (muted) {
-                    $('#muteSwitch_muted').hide(75);
-                } else {
-                    $('#muteSwitch_unmuted').hide(75);
-                }
-            })
+                $('#muteSwitch').hide(75);
+            });
+
             var speechEvents = hark(stream, {});
             speechEvents.on('speaking', function () {
                 const harkMsg = {
@@ -3167,11 +3194,11 @@ $(function () {
                 "timestamp": Date.now()
             });
 
-            updateChatMessages(true,false);
+            updateChatMessages(true, false);
         })
         p.on('stream', function (otherStream) {
-            otherStream.onended=function(e){
-                console.log(otherUsername+' stream ended');
+            otherStream.onended = function (e) {
+                console.log(otherUsername + ' stream ended');
                 console.log(e);
             }
             // otherStream.oniceconnectionstatechange=function(){
@@ -3197,10 +3224,10 @@ $(function () {
             // }
             video.play();
         })
-        p.on('error',function(err){
+        p.on('error', function (err) {
             //remove the video
-            $('#'+otherUsername+'_video').remove();
-            if($('#spotlight video').length==0){
+            $('#' + otherUsername + '_video').remove();
+            if ($('#spotlight video').length == 0) {
                 console.log('need a new spotlight')
                 setSpotlight(true);
             }
@@ -3211,19 +3238,9 @@ $(function () {
                 "timestamp": Date.now()
             });
 
-            updateChatMessages(true,false);
+            updateChatMessages(true, false);
         })
 
-    }
-
-    $('#backC').click(backToMainMenu);
-    $('#backJ').click(backToMainMenu);
-
-    function backToMainMenu() {
-        $('#login-ui_create').hide();
-        $('#login-ui_join').hide();
-        $('.typeSelect').show();
-        $('.buttonContainer').show();
     }
 
     $('#connectC').click(function () {
@@ -3307,7 +3324,7 @@ $(function () {
             console.log(data);
             messages.push(data);
             setSpotlight(data.username);
-            updateChatMessages(true,false);
+            updateChatMessages(true, false);
             // translate(data.message,{from:data.sl,to:languages[languageIndex]['translateLangCode']}).then(res => {
             //     data.message=res;
             //     messages.push(data);
@@ -3323,11 +3340,11 @@ $(function () {
 })
 
 function setSpotlight(user) {
-    if(user===true){
+    if (user === true) {
         //set spotlight to first video in videoBar, then return
         console.log('setting new spotlight...')
-        if($('#videoBar video').length >= 1){
-            let newSpotlight=$('#videoBar').children("video").first().detach();
+        if ($('#videoBar video').length >= 1) {
+            let newSpotlight = $('#videoBar').children("video").first().detach();
             $('#spotlight').prepend(newSpotlight);
             console.log('set new spotlight.')
         }
@@ -3370,9 +3387,9 @@ function sendToAll(data) {
         val['peer'].send(data);
     }
 }
-function sendToServer(data){
-    data.roomName=roomName;
-    data.password=password;
+function sendToServer(data) {
+    data.roomName = roomName;
+    data.password = password;
     connection.send(JSON.stringify(data));
 }
 function setSubtitleText(text) {
@@ -3408,19 +3425,19 @@ function setSubtitleText(text) {
     subParent.css('bottom', ($('#spotlight').height() - $('#spotlight video').height() + window.innerHeight * .035) + 'px');
 }
 
-function updateChatMessages(addToSub,updateAll) {
+function updateChatMessages(addToSub, updateAll) {
     if (messages.length > 0 && !updateAll) {
         let index = messages.length - 1;
-        let msgToUpdate=messages[index];
-        updateMessage(msgToUpdate,addToSub);
-    }else if(messages.length>0){
+        let msgToUpdate = messages[index];
+        updateMessage(msgToUpdate, addToSub);
+    } else if (messages.length > 0) {
         //push all messages to chatbox
-        for(let i=0;i<messages.length;i++){
-            updateMessage(messages[i],addToSub);
+        for (let i = 0; i < messages.length; i++) {
+            updateMessage(messages[i], addToSub);
         }
     }
 }
-function updateMessage(msgToUpdate,addToSub){
+function updateMessage(msgToUpdate, addToSub) {
     if (msgToUpdate.type === MSG_TYPE_SPEECH) {
         var messageHTML = "<p "
 
@@ -3463,23 +3480,24 @@ function updateMessage(msgToUpdate,addToSub){
         messageHTML += roomName;
         messageHTML += "</strong></span>!</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
-    }else if(msgToUpdate.type===MSG_TYPE_USER_LEFT){
+    } else if (msgToUpdate.type === MSG_TYPE_USER_LEFT) {
         //Append left message to chat
         let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     }
     $('.chatBox').animate({
-        scrollTop: $('.chatBox')[0].scrollHeight}, 
+        scrollTop: $('.chatBox')[0].scrollHeight
+    },
         0);
-    $( "#chatBox" ).addClass( "scroll-y" );
+    $("#chatBox").addClass("scroll-y");
     scroll++;
-    setTimeout(function(){
+    setTimeout(function () {
         scroll--;
-        if(scroll==0){
+        if (scroll == 0) {
             $('#chatBox').removeClass('scroll-y');
         }
-        
-    },2000)
+
+    }, 2000)
 }
 
 function beginSpeechRecognition() {
@@ -3543,18 +3561,18 @@ function transmitSpeech(message) {
 
     // Update our message list locally.
     messages.push(msg);
-    updateChatMessages(false,false);
+    updateChatMessages(false, false);
 }
 
-function playAnimation(elementID, animName, endedCallback) {
+function playAnimation(elementID, animName, animSpeed, endedCallback) {
     let element = document.getElementById(elementID);
-    element.classList.add('animated', animName);
+    element.classList.add('animated', animName, animSpeed);
 
     function onAnimationEnd() {
-        element.classList.remove('animated', animName);
+        element.classList.remove('animated', animName, animSpeed);
         element.removeEventListener('animationend', onAnimationEnd);
 
-        if (typeof callback == 'function') {
+        if (typeof endedCallback == 'function') {
             endedCallback();
         }
     }
