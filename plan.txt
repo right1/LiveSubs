@@ -1,7 +1,6 @@
 Todo:
 
-1. Remove video after disconnect 
-2. Animations
-3. make sure that users can only create a room from create button and join from join button
-4. chat backup to server
-5. Multi browser support/alerting user if browser isn't supported
+1. Animations
+2. Possibly do something with timestamps?
+3. Chat download button
+4. Multi browser support/alerting user if browser isn't supported

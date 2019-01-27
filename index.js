@@ -75,6 +75,7 @@ $(function () {
 
                 messages.push(msg);
                 updateChatMessages(true,false);
+                sendToServer(msg);
                 sendToAll(JSON.stringify(msg))
             }
         }
@@ -214,6 +215,8 @@ $(function () {
                     loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
                 } else if (data.success === CONNECT_JOINED) {
+                    messages=data.chat;
+                    updateChatMessages(false,true);
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     $('.login-ui').hide();
                     translateTo = data.translateTo;
@@ -236,6 +239,7 @@ $(function () {
                         }
                         peerSetup(newPeer, false, data.usernames[i])
                     }
+                    
                 } else if (data.success === CONNECT_FAILED) {
                     // TODO: Use bootstrap notify.
                     $('.connectionErrorMsg').text(data.message);
@@ -402,7 +406,7 @@ $(function () {
             isSpectator = true;
         }
         var payload = JSON.stringify({
-            "type": 'roomRequest',
+            "type": 'createRequest',
             "roomName": roomName,
             "password": password,
             "username": username,
@@ -421,7 +425,7 @@ $(function () {
             isSpectator = true;
         }
         var payload = JSON.stringify({
-            "type": 'roomRequest',
+            "type": 'joinRequest',
             "roomName": roomName,
             "password": password,
             "username": username,
@@ -532,7 +536,11 @@ function sendToAll(data) {
         val['peer'].send(data);
     }
 }
-
+function sendToServer(data){
+    data.roomName=roomName;
+    data.password=password;
+    connection.send(JSON.stringify(data));
+}
 function setSubtitleText(text) {
     let maxSubChars = languages[languageIndex].maxSubtitleChars;
     const subtitle = document.getElementById('subtitle');
@@ -569,70 +577,75 @@ function setSubtitleText(text) {
 function updateChatMessages(addToSub,updateAll) {
     if (messages.length > 0 && !updateAll) {
         let index = messages.length - 1;
-
-        if (messages[index].type === MSG_TYPE_SPEECH) {
-            var messageHTML = "<p "
-
-            // Do not translate messages that are in the user's own language.
-            if (messages[index].sl === languageIndex && protectTranslations) {
-                messageHTML += 'translate="no" ';
-            }
-
-            // Append speech transcription to chat.
-            messageHTML += "><span class='usernameDisplayS2T' translate='no'>" + messages[index]['username'] + ": </span>";
-            messageHTML += messages[index]['message'] + '</p>';
-            $('.chatBox').html($('.chatBox').html() + messageHTML);
-
-            if (addToSub) {
-                // Append to subtitles.
-                setSubtitleText(messages[index]['message']);
-                gracePeriod = true;
-                setTimeout(function () {
-                    gracePeriod = false;
-                }, 1000)
-            }
-        } else if (messages[index].type === MSG_TYPE_CHAT) {
-            var messageHTML = "<p "
-
-            if (messages[index].sl === languageIndex) {
-                messageHTML += 'translate="no" ';
-            }
-
-            // Append message to chat.
-            messageHTML += "><span class='usernameDisplayChat'>" + messages[index]['username'] + ": </span>";
-            messageHTML += messages[index]['message'] + '</p>';
-            $('.chatBox').html($('.chatBox').html() + messageHTML);
-        } else if (messages[index].type === MSG_TYPE_USER_JOINED) {
-            // Append join message to chat.
-            let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + messages[index]['username'] + "</span> joined the room!</p>";
-            $('.chatBox').html($('.chatBox').html() + messageHTML);
-        } else if (messages[index].type === MSG_TYPE_WELCOME) {
-            // Append welcome message to chat.
-            let messageHTML = "<p>Hello, <span class='usernameDisplayJoin' translate='no'>" + messages[index]['username'] + "</span>. Welcome to <span translate='no'><strong>";
-            messageHTML += roomName;
-            messageHTML += "</strong></span>!</p>";
-            $('.chatBox').html($('.chatBox').html() + messageHTML);
-        }else if(messages[index].type===MSG_TYPE_USER_LEFT){
-            //Append left message to chat
-            let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + messages[index]['username'] + "</span> left the room.</p>";
-            $('.chatBox').html($('.chatBox').html() + messageHTML);
-        }
-        $('.chatBox').animate({
-            scrollTop: $('.chatBox')[0].scrollHeight}, 
-            0);
-        $( "#chatBox" ).addClass( "scroll-y" );
-        scroll++;
-        setTimeout(function(){
-            scroll--;
-            if(scroll==0){
-                $('#chatBox').removeClass('scroll-y');
-            }
-            
-        },2000)
-        //autoscroll to bottom
+        let msgToUpdate=messages[index];
+        updateMessage(msgToUpdate,addToSub);
     }else if(messages.length>0){
         //push all messages to chatbox
+        for(let i=0;i<messages.length;i++){
+            updateMessage(messages[i],addToSub);
+        }
     }
+}
+function updateMessage(msgToUpdate,addToSub){
+    if (msgToUpdate.type === MSG_TYPE_SPEECH) {
+        var messageHTML = "<p "
+
+        // Do not translate messages that are in the user's own language.
+        if (msgToUpdate.sl === languageIndex && protectTranslations) {
+            messageHTML += 'translate="no" ';
+        }
+
+        // Append speech transcription to chat.
+        messageHTML += "><span class='usernameDisplayS2T' translate='no'>" + msgToUpdate['username'] + ": </span>";
+        messageHTML += msgToUpdate['message'] + '</p>';
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
+
+        if (addToSub) {
+            // Append to subtitles.
+            setSubtitleText(msgToUpdate['message']);
+            gracePeriod = true;
+            setTimeout(function () {
+                gracePeriod = false;
+            }, 1000)
+        }
+    } else if (msgToUpdate.type === MSG_TYPE_CHAT) {
+        var messageHTML = "<p "
+
+        if (msgToUpdate.sl === languageIndex) {
+            messageHTML += 'translate="no" ';
+        }
+
+        // Append message to chat.
+        messageHTML += "><span class='usernameDisplayChat'>" + msgToUpdate['username'] + ": </span>";
+        messageHTML += msgToUpdate['message'] + '</p>';
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
+    } else if (msgToUpdate.type === MSG_TYPE_USER_JOINED) {
+        // Append join message to chat.
+        let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> joined the room!</p>";
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
+    } else if (msgToUpdate.type === MSG_TYPE_WELCOME) {
+        // Append welcome message to chat.
+        let messageHTML = "<p>Hello, <span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span>. Welcome to <span translate='no'><strong>";
+        messageHTML += roomName;
+        messageHTML += "</strong></span>!</p>";
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
+    }else if(msgToUpdate.type===MSG_TYPE_USER_LEFT){
+        //Append left message to chat
+        let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
+    }
+    $('.chatBox').animate({
+        scrollTop: $('.chatBox')[0].scrollHeight}, 
+        0);
+    $( "#chatBox" ).addClass( "scroll-y" );
+    scroll++;
+    setTimeout(function(){
+        scroll--;
+        if(scroll==0){
+            $('#chatBox').removeClass('scroll-y');
+        }
+        
+    },2000)
 }
 
 function beginSpeechRecognition() {
@@ -691,6 +704,7 @@ function transmitSpeech(message) {
     };
 
     // Send message to all peers.
+    sendToServer(msg);
     sendToAll(JSON.stringify(msg))
 
     // Update our message list locally.
