@@ -48,9 +48,9 @@ app.use((req, res) => {
     }
 });
 
-app.listen(googlePort, () => {
-    console.log('App listening to ' + googlePort);
-});
+// app.listen(googlePort, () => {
+//     console.log('App listening to ' + googlePort);
+// });
 
 http.createServer(function (req, res) {
     console.log('requested http');
