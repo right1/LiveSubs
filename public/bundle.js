@@ -3472,7 +3472,7 @@ function updateMessage(msgToUpdate, addToSub) {
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     } else if (msgToUpdate.type === MSG_TYPE_USER_JOINED) {
         // Append join message to chat.
-        let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> joined the room!</p>";
+        let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> joined the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     } else if (msgToUpdate.type === MSG_TYPE_WELCOME) {
         // Append welcome message to chat.
@@ -3481,14 +3481,15 @@ function updateMessage(msgToUpdate, addToSub) {
         messageHTML += "</strong></span>!</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     } else if (msgToUpdate.type === MSG_TYPE_USER_LEFT) {
-        //Append left message to chat
+        // Append leave message to chat.
         let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     }
+
     $('.chatBox').animate({
         scrollTop: $('.chatBox')[0].scrollHeight
-    },
-        0);
+    }, 0);
+
     $("#chatBox").addClass("scroll-y");
     scroll++;
     setTimeout(function () {
@@ -3496,8 +3497,7 @@ function updateMessage(msgToUpdate, addToSub) {
         if (scroll == 0) {
             $('#chatBox').removeClass('scroll-y');
         }
-
-    }, 2000)
+    }, 2000);
 }
 
 function beginSpeechRecognition() {
