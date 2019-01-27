@@ -1,6 +1,7 @@
 body {
 	background-color: #242424;
 	background-image: url(https://kevinsomnia.github.io/images/noise_bg.jpg);
+	overflow-x: hidden;
 }
 .userCamera {
 	z-index: 3;

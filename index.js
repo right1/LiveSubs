@@ -199,8 +199,8 @@ $(function () {
     }
 
     function startConnection(stream) {
-        //connection = new WebSocket('wss://localhost'); // local testing
-        connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
+        connection = new WebSocket('wss://localhost'); // local testing
+        //connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
 
         // connection.onopen=function(){
         // }
