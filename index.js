@@ -93,16 +93,22 @@ $(function () {
     $('.login-ui').hide();
     $('.chatBoxParent').hide();
 
-    $('#joinRoom').click(function () {
-        $('#login-ui_join').show();
-        $('.typeSelect').hide();
-        $('.buttonContainer').hide();
-    })
+    // Callbacks: Show login menus and hide buttons.
     $('#createRoom').click(function () {
         $('#login-ui_create').show();
         $('.typeSelect').hide();
         $('.buttonContainer').hide();
-    })
+    });
+    $('#joinRoom').click(function () {
+        $('#login-ui_join').show();
+        $('.typeSelect').hide();
+        $('.buttonContainer').hide();
+    });
+
+    // Play animations for main menu.
+    playAnimation('settingsBtn', 'rollIn', null);
+    playAnimation('createRoom', 'rollIn', null);
+    playAnimation('joinRoom', 'rollIn', null);
 
     // Password reveal setup.
     $('#showPwdC').show();
@@ -704,4 +710,20 @@ function transmitSpeech(message) {
     // Update our message list locally.
     messages.push(msg);
     updateChatMessages(false,false);
+}
+
+function playAnimation(elementID, animName, endedCallback) {
+    let element = document.getElementById(elementID);
+    element.classList.add('animated', animName);
+
+    function onAnimationEnd() {
+        element.classList.remove('animated', animName);
+        element.removeEventListener('animationend', onAnimationEnd);
+
+        if (typeof callback == 'function') {
+            endedCallback();
+        }
+    }
+
+    element.addEventListener('animationend', onAnimationEnd);
 }
