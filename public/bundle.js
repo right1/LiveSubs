@@ -3029,12 +3029,13 @@ $(function () {
         // video.load();
         video.play();
         startConnection(stream);
-        $('#muteSwitch').show();
         // userInstance=new Peer({initiator: true,stream: stream})
     }
 
     function startConnection(stream) {
-        connection = new WebSocket('wss://livesub-229106.appspot.com');
+        connection = new WebSocket('wss://localhost:8080'); // local testing
+        //connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
+
         // connection.onopen=function(){
         // }
 
@@ -3286,28 +3287,33 @@ $(function () {
             connection.send(payload);
         }
     });
-    $('#downloadBtn').click(function(){
-        var msgString="";
-        // var timeZoneOffset=new Date().getTimezoneOffset() * 60 * 1000 //minutes -> ms
-        // timeZoneOffset=0-timeZoneOffset;
-        for(let i=0;i<messages.length;i++){
-            if(messages[i].type===MSG_TYPE_SPEECH || messages[i].type===MSG_TYPE_CHAT){
-                // let localTime=messages[i].timestamp + timeZoneOffset;
-                let d=new Date(messages[i].timestamp);
-                msgString+="[";
-                msgString+=d.toLocaleString('en-US',{});
-                msgString+='] ';
-                msgString+=messages[i].username;
-                msgString+=': ';
-                msgString+=messages[i].message.replace(/\n/g,"");
-                msgString+='\r\n';
-            }
+    $('#downloadBtn').click(function () {
+        var msgString = "";
 
+        for (let i = 0; i < messages.length; i++) {
+            if (messages[i].type === MSG_TYPE_SPEECH || messages[i].type === MSG_TYPE_CHAT) {
+                // let localTime=messages[i].timestamp + timeZoneOffset;
+                let d = new Date(messages[i].timestamp);
+                // timestamp
+                msgString += '[';
+                msgString += dateToString(d);
+                msgString += '] ';
+                // username
+                msgString += messages[i].username;
+                // language code
+                msgString += ' [';
+                msgString += languages[messages[i].sl].translateLangCode.toUpperCase();
+                msgString += ']: ';
+                // message
+                msgString += messages[i].message.replace(/\n/g, "");
+                msgString += '\r\n';
+            }
         }
-        msgString="data:text/plain;charset=UTF-8,"+encodeURIComponent(msgString);
-        this.download=roomName+"_chat (LiveSubs).txt";
-        this.href =  msgString;
-    })
+
+        msgString = "data:text/plain;charset=UTF-8," + encodeURIComponent(msgString);
+        this.download = roomName + "_chat (LiveSubs).txt";
+        this.href = msgString;
+    });
     $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function () {
         var lang = $(".yt-button__text").text();
         if (lang.toLowerCase() !== languages[languageIndex]['translateLangCode']) {
@@ -3599,6 +3605,34 @@ function playAnimation(elementID, animName, animSpeed, endedCallback) {
     }
 
     element.addEventListener('animationend', onAnimationEnd);
+}
+
+function dateToString(date) {
+    let result = '';
+    result += padWithZeroes(date.getDate(), 2);
+    result += '/';
+    result += padWithZeroes(date.getMonth() + 1, 2);
+    result += '/';
+    result += date.getFullYear();
+
+    result += ' ';
+
+    let hours = 3;
+    let minutes = 3;
+    let seconds = 3;
+
+    result += padWithZeroes(date.getHours(), 2);
+    result += ':';
+    result += padWithZeroes(date.getMinutes(), 2);
+    result += ':';
+    result += padWithZeroes(date.getSeconds(), 2);
+
+    return result;
+}
+
+function padWithZeroes(n, width) {
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
 }
 },{"hark":14,"simple-peer":30}],10:[function(require,module,exports){
 (function (Buffer){

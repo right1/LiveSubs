@@ -210,8 +210,13 @@
     <div class="chatBoxParent">
         <div class="chatInner">
             <div id="topChat">
-                <h4 translate="no"><span id="roomDisplay"></span><a id="downloadBtn" data-toggle="tooltip"
-                    data-placement="right" title="Download Chat Messages" style="height:3vh;margin-left: 5px"><img style="height:inherit" src="https://cdn.pixabay.com/photo/2016/12/18/13/45/download-1915753_960_720.png"></a></h4>
+                <h4 translate="no"><span id="roomDisplay"></span>
+                    <a id="downloadBtn" data-toggle="tooltip" data-placement="bottom" title="Download chat history"
+                        style="height:3vh;margin-left:10px">
+                        <img style="height:inherit" src="https://freeiconshop.com/wp-content/uploads/edd/download-flat.png">
+                    </a>
+                </h4>
+
                 <strong>Language: <span id="languageDisplay"></span></strong>
                 <hr class='hr-light'>
             </div>
@@ -226,8 +231,7 @@
         </div>
     </div>
 
-    <img id="settingsBtn" class="settings hoverPointer" data-toggle="modal" data-target="#settingsMenu"
-        src="https://cdn4.iconfinder.com/data/icons/web-ui-color/128/Settings-128.png">
+    <img id="settingsBtn" class="settings hoverPointer" data-toggle="modal" data-target="#settingsMenu" src="https://cdn4.iconfinder.com/data/icons/web-ui-color/128/Settings-128.png">
 
     <!-- Modals -->
     <div class="modal fade" id="settingsMenu" tabindex="-1" role="dialog">
