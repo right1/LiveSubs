@@ -3609,11 +3609,11 @@ function playAnimation(elementID, animName, animSpeed, endedCallback) {
 
 function dateToString(date) {
     let result = '';
-    result += padWithZeroes(date.getDate(), 2);
+    result += date.getFullYear();
     result += '/';
     result += padWithZeroes(date.getMonth() + 1, 2);
     result += '/';
-    result += date.getFullYear();
+    result += padWithZeroes(date.getDate(), 2);
 
     result += ' ';
 
