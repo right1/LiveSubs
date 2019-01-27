@@ -3033,8 +3033,8 @@ $(function () {
     }
 
     function startConnection(stream) {
-        connection = new WebSocket('wss://localhost:8080'); // local testing
-        //connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
+        //connection = new WebSocket('wss://localhost:8080'); // local testing
+        connection = new WebSocket('wss://livesub-229106.appspot.com:8080'); // google cloud
 
         // connection.onopen=function(){
         // }
