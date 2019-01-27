@@ -454,12 +454,11 @@ $(function () {
     });
     $('#downloadBtn').click(function(){
         var msgString="";
-        // var timeZoneOffset=new Date().getTimezoneOffset() * 60 * 1000 //minutes -> ms
-        // timeZoneOffset=0-timeZoneOffset;
+        var timeZoneOffset=new Date().getTimezoneOffset() * 60 * 1000 //minutes -> ms
+        timeZoneOffset=0-timeZoneOffset;
         for(let i=0;i<messages.length;i++){
             if(messages[i].type===MSG_TYPE_SPEECH || messages[i].type===MSG_TYPE_CHAT){
-                // let localTime=messages[i].timestamp + timeZoneOffset;
-                let d=new Date(messages[i].timestamp);
+                let d=new Date(messages[i].timestamp+timeZoneOffset);
                 msgString+="[";
                 msgString+=d.toLocaleString('en-US',{});
                 msgString+='] ';
