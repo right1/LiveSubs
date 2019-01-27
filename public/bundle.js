@@ -3034,7 +3034,7 @@ $(function () {
     }
 
     function startConnection(stream) {
-        connection = new WebSocket('wss://localhost');
+        connection = new WebSocket('wss://livesub-229106.appspot.com');
         // connection.onopen=function(){
         // }
 
@@ -3305,8 +3305,7 @@ $(function () {
 
         }
         msgString="data:text/plain;charset=UTF-8,"+encodeURIComponent(msgString);
-        console.log(msgString);
-        this.download=roomName+"_chat.txt";
+        this.download=roomName+"_chat (LiveSubs).txt";
         this.href =  msgString;
     })
     $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function () {
