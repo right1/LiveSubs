@@ -200,7 +200,7 @@ $(function () {
     }
 
     function startConnection(stream) {
-        connection = new WebSocket('wss://localhost');
+        connection = new WebSocket('wss://livesub-229106.appspot.com');
         // connection.onopen=function(){
         // }
 
