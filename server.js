@@ -11,7 +11,8 @@ const httpsPort = 443;
 const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
-
+const MSG_TYPE_CHAT = 2;
+const MSG_TYPE_SPEECH = 3;
 let privateKey = fs.readFileSync('credentials_testing/key.pem');
 let certificate = fs.readFileSync('credentials_testing/cert.pem');
 var credentials = { key: privateKey, cert: certificate };
@@ -71,11 +72,17 @@ function receivedData(data_, connectionInstance) {
     // Received request from client.
     data_ = JSON.parse(data_);
 
-    if (data_.type === 'roomRequest') {
+    if (data_.type === 'createRequest') {
         createRoom(data_, connectionInstance);
+    } else if (data_.type === 'joinRequest') {
+        joinRoom(data_, connectionInstance);
     }
     else if (data_.type === 'peerId') {
         handlePeer(data_);
+    } else if (data_.type === MSG_TYPE_CHAT || data_.type === MSG_TYPE_SPEECH) {//chat message to backup
+        if (activeRooms[data_.roomName] && activeRooms[data_.roomName]['password'] === data_.password) {
+            activeRooms[data_.roomName]['chat'].push(data_);
+        }
     }
 }
 
@@ -87,7 +94,7 @@ function createRoom(data, connectionInstance) {
 
         activeRooms[data.roomName] = {
             "connections": connectionStart,
-            "chat": {},
+            "chat": [],
             "password": data.password,
             "createTimeStamp": date,
             "languages": data.languages
@@ -101,78 +108,97 @@ function createRoom(data, connectionInstance) {
         }));
 
         console.log(data.username + ' created room ' + data.roomName);
-    }
-    else {
-        var usernames = Object.keys(activeRooms[data.roomName]["connections"]);
-        const roomLanguages = activeRooms[data.roomName]['languages'];
-
-        if (activeRooms[data.roomName]['password'] !== data.password) {
-            connectionInstance.send(JSON.stringify({
-                "type": "roomCreation",
-                "success": FAILED,
-                "message": "Incorrect password!"
-            }));
-            return;
-        }
-        else if (usernames.indexOf(data.username) != -1) {
-            // Send the usernames of people in room.
-            connectionInstance.send(JSON.stringify({
-                "type": "roomCreation",
-                "success": FAILED,
-                "message": "The following usernames exist: [" + usernames.join(',') + ']',
-                "usernames": usernames
-            }));
-            return;
-        } else if (roomLanguages[0] !== data.language && roomLanguages[1] !== data.language) {
-            connectionInstance.send(JSON.stringify({
-                "type": "roomCreation",
-                "success": FAILED,
-                "message": "This room only supports " + languages[roomLanguages[0]]['displayName'] + " and " + languages[roomLanguages[1]]['displayName'] + "."
-            }));
-            return;
-        }
-
-        // Inform client of which language to translate to. If the translation is not applicable, it will be -1.
-        let otherLanguage = -1;
-
-        for (let i = 0; i < roomLanguages.length; i++) {
-            if (roomLanguages[i] != data.language) {
-                otherLanguage = roomLanguages[i];
-                break;
-            }
-        }
-
+    } else {
         connectionInstance.send(JSON.stringify({
             "type": "roomCreation",
-            "roomName": data.roomName,
-            "success": JOINED,
-            "message": "added you to room",
-            "usernames": usernames,
-            "translateTo": otherLanguage
+            "success": FAILED,
+            "message": "Room already exists."
         }));
-
-        // activeRooms[data.roomName]['connectionCount']++;
-        //update connection instance
-        for (let value of Object.values(activeRooms[data.roomName]['connections'])) {
-            value.send(JSON.stringify({
-                "type": "newUser",
-                "username": data.username
-            }));
-        }
-        activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
-        console.log(data.username + ' joined ' + data.roomName);
+        return;
     }
-    connectionInstance.on('close', function (connection) {
-        delete activeRooms[data.roomName]['connections'][data.username];
 
-        if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {
-            //deleting room after users have left
-            delete activeRooms[data.roomName];
-            console.log('Deleted room ' + data.roomName);
-        }
-    })
+    connectionInstance.on('close', onClose)
 }
+function joinRoom(data, connectionInstance) {
+    
+    if (!activeRooms[data.roomName]) {
+        connectionInstance.send(JSON.stringify({
+            "type": "roomCreation",
+            "success": FAILED,
+            "message": "Room doesn't exist!"
+        }));
+        return;
+    }
+    var usernames = Object.keys(activeRooms[data.roomName]["connections"]);
+    const roomLanguages = activeRooms[data.roomName]['languages'];
+    if (activeRooms[data.roomName]['password'] !== data.password) {
+        connectionInstance.send(JSON.stringify({
+            "type": "roomCreation",
+            "success": FAILED,
+            "message": "Incorrect password!"
+        }));
+        return;
+    }
+    else if (usernames.indexOf(data.username) != -1) {
+        // Send the usernames of people in room.
+        connectionInstance.send(JSON.stringify({
+            "type": "roomCreation",
+            "success": FAILED,
+            "message": "The following usernames exist: [" + usernames.join(',') + ']',
+            "usernames": usernames
+        }));
+        return;
+    } else if (roomLanguages[0] !== data.language && roomLanguages[1] !== data.language) {
+        connectionInstance.send(JSON.stringify({
+            "type": "roomCreation",
+            "success": FAILED,
+            "message": "This room only supports " + languages[roomLanguages[0]]['displayName'] + " and " + languages[roomLanguages[1]]['displayName'] + "."
+        }));
+        return;
+    }
 
+    // Inform client of which language to translate to. If the translation is not applicable, it will be -1.
+    let otherLanguage = -1;
+
+    for (let i = 0; i < roomLanguages.length; i++) {
+        if (roomLanguages[i] != data.language) {
+            otherLanguage = roomLanguages[i];
+            break;
+        }
+    }
+
+    connectionInstance.send(JSON.stringify({
+        "type": "roomCreation",
+        "roomName": data.roomName,
+        "success": JOINED,
+        "message": "added you to room",
+        "usernames": usernames,
+        "translateTo": otherLanguage,
+        "chat": activeRooms[data.roomName]['chat']
+    }));
+
+    // activeRooms[data.roomName]['connectionCount']++;
+    //update connection instance
+    for (let value of Object.values(activeRooms[data.roomName]['connections'])) {
+        value.send(JSON.stringify({
+            "type": "newUser",
+            "username": data.username
+        }));
+    }
+    activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
+    console.log(data.username + ' joined ' + data.roomName);
+    connectionInstance.on('close', onClose)
+
+}
+function onClose(connection){
+    delete activeRooms[data.roomName]['connections'][data.username];
+
+    if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {
+        //deleting room after users have left
+        delete activeRooms[data.roomName];
+        console.log('Deleted room ' + data.roomName);
+    }
+}
 function handlePeer(data) {
     // Send response back to client.
     if (data.password !== activeRooms[data.roomName]['password']) {
