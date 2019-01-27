@@ -3033,8 +3033,8 @@ $(function () {
     }
 
     function startConnection(stream) {
-        //connection = new WebSocket('wss://localhost:8080'); // local testing
-        connection = new WebSocket('wss://livesub-229106.appspot.com:8080'); // google cloud
+        //connection = new WebSocket('wss://localhost'); // local testing
+        connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
 
         // connection.onopen=function(){
         // }
@@ -3065,6 +3065,7 @@ $(function () {
                     $('.chatBox').height(elHeight);
 
                     // Clear and display welcome message for the joining user only.
+                    messages.length = 0;
                     messages.push({
                         "username": username,
                         "message": "",
@@ -3494,7 +3495,7 @@ function updateMessage(msgToUpdate, addToSub) {
         }
 
         // Append message to chat.
-        messageHTML += "><span class='usernameDisplayChat'>" + msgToUpdate['username'] + ": </span>";
+        messageHTML += "><span class='usernameDisplayChat' translate='no'>" + msgToUpdate['username'] + ": </span>";
         messageHTML += msgToUpdate['message'] + '</p>';
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     } else if (msgToUpdate.type === MSG_TYPE_USER_JOINED) {

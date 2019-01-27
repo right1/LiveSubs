@@ -7,7 +7,8 @@ const https = require('https');
 const express = require('express');
 const fs = require('fs');
 const httpPort = 80;
-const httpsPort = 8080;
+const httpsPort = 443;
+const googlePort = 8080;
 const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
@@ -45,6 +46,10 @@ app.use((req, res) => {
         console.log('redirected');
         res.redirect('https://' + req.headers.host + req.url);
     }
+});
+
+app.listen(googlePort, () => {
+    console.log('App listening to ' + googlePort);
 });
 
 http.createServer(function (req, res) {
