@@ -3263,14 +3263,16 @@ $(function () {
 
     function peerSetup(p, init, otherUsername) {
         // newPeer.signal(signalData);
-        p.on('data', onDataReceived)
+        let userActive = true;
+        p.on('data', onDataReceived);
+
         peerInstances[otherUsername] = {
             "init": init,
             "peer": p
         }
         p.on('signal', function (data) {
             data = JSON.stringify(data);
-            console.log('sending to server peerid');
+
             connection.send(JSON.stringify({
                 "type": "peerId",
                 "id": data,
@@ -3279,16 +3281,15 @@ $(function () {
                 "initiator": init,
                 "roomName": roomName,
                 "password": password
-            }))
+            }));
         })
         p.on('connect', function (data) {
             // New user joined
             let arrToSend = messages.filter(msg => msg.type == MSG_TYPE_SPEECH || msg.type == MSG_TYPE_CHAT);
-            //console.log(arrToSend);
             if (roomCreator) p.send(JSON.stringify({
                 "type": MSG_TYPE_CHAT_RESTORE,
                 "chat": arrToSend
-            }))
+            }));
             messages.push({
                 "username": otherUsername,
                 "message": "",
@@ -3327,15 +3328,23 @@ $(function () {
             video.play();
         })
         p.on('error', function (err) {
-            //remove the video
+            // remove the video
             userLeft();
-
         });
         p.on('close', function () {
             userLeft();
         })
+
         function userLeft() {
+            if (!userActive) {
+                return;
+            }
+
+            userActive = false;
+
+            // Remove their video.
             $('#' + otherUsername + '_video').remove();
+
             if ($('#spotlight video').length == 0) {
                 console.log('need a new spotlight')
                 setSpotlight(true);
