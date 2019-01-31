@@ -2841,6 +2841,7 @@ const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
 const MSG_TYPE_HARK = 4;
 const MSG_TYPE_USER_LEFT = 5;
+const MSG_TYPE_CHAT_RESTORE=6;
 const CONNECT_FAILED = 0;
 const CONNECT_JOINED = 1;
 const CONNECT_CREATED = 2;
@@ -2851,6 +2852,7 @@ const videoOptions = {
     video: true,
     audio: true
 };
+var roomCreator=false;
 var messages = [];
 // import adapter from 'webrtc-adapter'
 var peerInstances = {}; //username: instance
@@ -2912,7 +2914,7 @@ $(function () {
 
                 messages.push(msg);
                 updateChatMessages(true, false);
-                sendToServer(msg);
+                // sendToServer(msg);
                 sendToAll(JSON.stringify(msg))
             }
         }
@@ -3082,11 +3084,12 @@ $(function () {
                 if (data.success === CONNECT_CREATED) {
                     // Created and joined the room.
                     // userInstance=new Peer({initiator: true,trickle:false,stream: stream})
+                    roomCreator=true;
                     loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
                 } else if (data.success === CONNECT_JOINED) {
-                    messages = data.chat;
-                    updateChatMessages(false, true);
+                    // messages = data.chat;
+                    // updateChatMessages(false, true);
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     $('.login-ui').hide();
                     translateTo = data.translateTo;
@@ -3192,6 +3195,12 @@ $(function () {
         })
         p.on('connect', function (data) {
             // New user joined
+            let arrToSend=messages.filter(msg => msg.type ==MSG_TYPE_SPEECH || msg.type==MSG_TYPE_CHAT);
+            //console.log(arrToSend);
+            if(roomCreator)p.send(JSON.stringify({
+                "type": MSG_TYPE_CHAT_RESTORE,
+                "chat": arrToSend
+            }))
             messages.push({
                 "username": otherUsername,
                 "message": "",
@@ -3371,8 +3380,16 @@ $(function () {
             // })
 
         }
-        if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
+        else if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
             setSpotlight(data.username);
+        }else if(data.type===MSG_TYPE_CHAT_RESTORE){
+            messages = data.chat;
+            if(messages.length>=1)messages.push({
+                "message": "Successfully restored past sent messages. All messages sent below this are live!",
+                "type": MSG_TYPE_CHAT_RESTORE,
+                "timestamp": Date.now()
+            })
+            updateChatMessages(false, true);
         }
     }
 })
@@ -3426,11 +3443,11 @@ function sendToAll(data) {
         val['peer'].send(data);
     }
 }
-function sendToServer(data) {
-    data.roomName = roomName;
-    data.password = password;
-    connection.send(JSON.stringify(data));
-}
+// function sendToServer(data) {
+//     data.roomName = roomName;
+//     data.password = password;
+//     connection.send(JSON.stringify(data));
+// }
 function setSubtitleText(text) {
     let maxSubChars = languages[languageIndex].maxSubtitleChars;
     const subtitle = document.getElementById('subtitle');
@@ -3525,6 +3542,9 @@ function updateMessage(msgToUpdate, addToSub) {
         // Append leave message to chat.
         let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
+    }else if(msgToUpdate.type===MSG_TYPE_CHAT_RESTORE){
+        let messageHTML = "<p class='alertmsg'>" + msgToUpdate['message'] + "</p>";
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
     }
 
     $('.chatBox').animate({
@@ -3597,7 +3617,7 @@ function transmitSpeech(message) {
     };
 
     // Send message to all peers.
-    sendToServer(msg);
+    // sendToServer(msg);
     sendToAll(JSON.stringify(msg))
 
     // Update our message list locally.

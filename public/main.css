@@ -176,6 +176,9 @@ a:hover {
 .usernameDisplayJoin {
 	color: #cf6339
 }
+.alertmsg {
+	color: rgb(231, 37, 37)
+}
 textarea {
 	resize: none;
 }
