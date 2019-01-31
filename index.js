@@ -94,7 +94,6 @@ $(function () {
     })
 
     $('.login-ui').hide();
-    $('.chatBoxParent').hide();
 
     // Callbacks: Show login menus and hide buttons.
     $('#createRoom').click(function () {

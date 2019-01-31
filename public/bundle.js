@@ -2883,9 +2883,8 @@ $(function () {
         }
     }
     var userAgent=navigator.userAgent;
-    console.log(userAgent);
     if(userAgent.indexOf("Chrome")==-1 || userAgent.indexOf("Android")>-1){
-        alert("Unsupported browser detected. Please use desktop version of Chrome.")
+        alert("Unsupported browser detected. Please use a desktop version of Chrome.")
     }
     // Register chat enter key callback.
     $(document).keypress(function (event) {
@@ -2929,7 +2928,6 @@ $(function () {
     })
 
     $('.login-ui').hide();
-    $('.chatBoxParent').hide();
 
     // Callbacks: Show login menus and hide buttons.
     $('#createRoom').click(function () {
