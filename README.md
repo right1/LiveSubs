@@ -7,4 +7,4 @@ Uses a WebSocket server to connect clients in the same room via simple-peer, all
 Spectators can also join the room to participate or view the conversation in realtime as well.
 Utilizes a Yandex Translate widget to translate all messages sent from the other language in the room.
 
-This implementation currently only works on Chrome (desktop/Android) due to Firefox requiring a TURN server for simple-peer and the WebSpeech API only being supported on Chrome.
+This implementation currently only works on Chrome (desktop) due to Firefox requiring a TURN server for simple-peer and the WebSpeech API only being supported on Chrome.
