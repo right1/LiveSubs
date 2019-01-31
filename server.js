@@ -58,16 +58,16 @@ app.use((req, res) => {
 //     console.log('App listening to ' + googlePort);
 // });
 
-// http.createServer(function (req, res) {
-//     console.log('requested http');
-//     app(req, res);
-// }).listen(httpPort);
+http.createServer(function (req, res) {
+    console.log('requested http');
+    app(req, res);
+}).listen(httpPort);
 
 var httpsServer = https.createServer(credentials, function (req, res) {
     //console.log('requested https')
     app(req, res);
 });
-httpsServer.listen(googlePort);
+httpsServer.listen(httpsPort);
 
 // Setup WebSocket server
 var wss = new WebSocket.Server({
