@@ -48,7 +48,6 @@ app.use((req, res) => {
         }
     }
     else {
-        res.redirect()
         console.log('Client made a insecure request for: ' + req.url);
     }
 });
