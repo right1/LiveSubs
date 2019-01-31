@@ -62,24 +62,24 @@ app.use((req, res) => {
     }
 });
 
-// app.listen(httpsPort, () => {
-//     console.log('App listening to ' + httpsPort);
-// });
+app.listen(httpsPort, () => {
+    console.log('App listening to ' + httpsPort);
+});
 
-// http.createServer(function (req, res) {
-//     console.log('requested http');
-//     app(req, res);
-// }).listen(httpPort);
+http.createServer(function (req, res) {
+    console.log('requested http');
+    app(req, res);
+}).listen(httpPort);
 
 var httpsServer = https.createServer(credentials, function (req, res) {
     //console.log('requested https')
     app(req, res);
 });
-httpsServer.listen(httpsPort);
+// httpsServer.listen(httpsPort);
 
 // Setup WebSocket server
 var wss = new WebSocket.Server({
-    server: httpsServer
+    server: httpServer
 });
 wss.on('connection', function connection(ws) {
     // Callback for client requests
