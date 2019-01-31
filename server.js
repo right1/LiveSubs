@@ -12,8 +12,8 @@ const googlePort = 8080;
 const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
-const MSG_TYPE_CHAT = 2;
-const MSG_TYPE_SPEECH = 3;
+// const MSG_TYPE_CHAT = 2;
+// const MSG_TYPE_SPEECH = 3;
 let privateKey = fs.readFileSync('credentials_testing/key.pem');
 let certificate = fs.readFileSync('credentials_testing/cert.pem');
 var credentials = { key: privateKey, cert: certificate };
@@ -90,10 +90,6 @@ function receivedData(data_, connectionInstance) {
     }
     else if (data_.type === 'peerId') {
         handlePeer(data_);
-    } else if (data_.type === MSG_TYPE_CHAT || data_.type === MSG_TYPE_SPEECH) {//chat message to backup
-        if (activeRooms[data_.roomName] && activeRooms[data_.roomName]['password'] === data_.password) {
-            activeRooms[data_.roomName]['chat'].push(data_);
-        }
     }
 }
 
@@ -105,7 +101,7 @@ function createRoom(data, connectionInstance) {
 
         activeRooms[data.roomName] = {
             "connections": connectionStart,
-            "chat": [],
+            //"chat": [],
             "password": data.password,
             "createTimeStamp": date,
             "languages": data.languages
@@ -186,8 +182,8 @@ function joinRoom(data, connectionInstance) {
         "success": JOINED,
         "message": "added you to room",
         "usernames": usernames,
-        "translateTo": otherLanguage,
-        "chat": activeRooms[data.roomName]['chat']
+        "translateTo": otherLanguage
+        //,"chat": activeRooms[data.roomName]['chat']
     }));
 
     // activeRooms[data.roomName]['connectionCount']++;

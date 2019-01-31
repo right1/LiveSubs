@@ -7,6 +7,7 @@ const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
 const MSG_TYPE_HARK = 4;
 const MSG_TYPE_USER_LEFT = 5;
+const MSG_TYPE_CHAT_RESTORE=6;
 const CONNECT_FAILED = 0;
 const CONNECT_JOINED = 1;
 const CONNECT_CREATED = 2;
@@ -17,6 +18,7 @@ const videoOptions = {
     video: true,
     audio: true
 };
+var roomCreator=false;
 var messages = [];
 // import adapter from 'webrtc-adapter'
 var peerInstances = {}; //username: instance
@@ -78,7 +80,7 @@ $(function () {
 
                 messages.push(msg);
                 updateChatMessages(true, false);
-                sendToServer(msg);
+                // sendToServer(msg);
                 sendToAll(JSON.stringify(msg))
             }
         }
@@ -175,7 +177,85 @@ $(function () {
         $('#hidePwdJ').hide();
         $('#passwordJ').attr('type', 'password');
     });
+    $('#connectC').click(function () {
+        username = $('#usernameC').val();
+        roomName = $('#roomNameC').val();
+        password = $('#passwordC').val();
+        let languages = [languageIndex, 0];
+        languages[1] = $('#langSelectC2').children("option:selected").val();
+        if (typeof languages[1] === "string") {
+            languages[1] = parseInt(languages[1]);
+        }
+        translateTo = languages[1];
+        if ($('#spectateC').is(":checked")) {
+            isSpectator = true;
+        }
+        var payload = JSON.stringify({
+            "type": 'createRequest',
+            "roomName": roomName,
+            "password": password,
+            "username": username,
+            "languages": languages
+        })
+        if (username.length > 0 && roomName.length > 0) {
+            connection.send(payload);
+        }
+    });
 
+    $('#connectJ').click(function () {
+        username = $('#usernameJ').val();
+        roomName = $('#roomNameJ').val();
+        password = $('#passwordJ').val();
+        if ($('#spectateJ').is(":checked")) {
+            isSpectator = true;
+        }
+        var payload = JSON.stringify({
+            "type": 'joinRequest',
+            "roomName": roomName,
+            "password": password,
+            "username": username,
+            "language": languageIndex
+        })
+        if (username.length > 0 && roomName.length > 0) {
+            connection.send(payload);
+        }
+    });
+    $('#downloadBtn').click(function () {
+        var msgString = "";
+
+        for (let i = 0; i < messages.length; i++) {
+            if (messages[i].type === MSG_TYPE_SPEECH || messages[i].type === MSG_TYPE_CHAT) {
+                // let localTime=messages[i].timestamp + timeZoneOffset;
+                let d = new Date(messages[i].timestamp);
+                // timestamp
+                msgString += '[';
+                msgString += dateToString(d);
+                msgString += '] ';
+                // username
+                msgString += messages[i].username;
+                // language code
+                msgString += ' [';
+                msgString += languages[messages[i].sl].translateLangCode.toUpperCase();
+                msgString += ']: ';
+                // message
+                msgString += messages[i].message.replace(/\n/g, "");
+                msgString += '\r\n';
+            }
+        }
+
+        msgString = "data:text/plain;charset=UTF-8," + encodeURIComponent(msgString);
+        this.download = roomName + "_chat (LiveSubs).txt";
+        this.href = msgString;
+    });
+    $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function () {
+        var lang = $(".yt-button__text").text();
+        if (lang.toLowerCase() !== languages[languageIndex]['translateLangCode']) {
+            protectTranslations = false;
+        } else {
+            protectTranslations = true;
+        }
+        console.log(lang, languages[languageIndex]['translateLangCode'], protectTranslations);
+    });
     $('#muteSwitch').hide();
 
     // Some sort of thing.
@@ -248,11 +328,12 @@ $(function () {
                 if (data.success === CONNECT_CREATED) {
                     // Created and joined the room.
                     // userInstance=new Peer({initiator: true,trickle:false,stream: stream})
+                    roomCreator=true;
                     loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
                 } else if (data.success === CONNECT_JOINED) {
-                    messages = data.chat;
-                    updateChatMessages(false, true);
+                    // messages = data.chat;
+                    // updateChatMessages(false, true);
                     // userInstance=new Peer({initiator: false,trickle:false,stream: stream})
                     $('.login-ui').hide();
                     translateTo = data.translateTo;
@@ -358,6 +439,12 @@ $(function () {
         })
         p.on('connect', function (data) {
             // New user joined
+            let arrToSend=messages.filter(msg => msg.type ==MSG_TYPE_SPEECH || msg.type==MSG_TYPE_CHAT);
+            //console.log(arrToSend);
+            if(roomCreator)p.send(JSON.stringify({
+                "type": MSG_TYPE_CHAT_RESTORE,
+                "chat": arrToSend
+            }))
             messages.push({
                 "username": otherUsername,
                 "message": "",
@@ -421,106 +508,6 @@ $(function () {
 
     }
 
-    $('#connectC').click(function () {
-        username = $('#usernameC').val();
-        roomName = $('#roomNameC').val();
-        password = $('#passwordC').val();
-        let languages = [languageIndex, 0];
-        languages[1] = $('#langSelectC2').children("option:selected").val();
-        if (typeof languages[1] === "string") {
-            languages[1] = parseInt(languages[1]);
-        }
-        translateTo = languages[1];
-        if ($('#spectateC').is(":checked")) {
-            isSpectator = true;
-        }
-        var payload = JSON.stringify({
-            "type": 'createRequest',
-            "roomName": roomName,
-            "password": password,
-            "username": username,
-            "languages": languages
-        })
-        if (username.length > 0 && roomName.length > 0) {
-            connection.send(payload);
-        }
-    });
-
-    $('#connectJ').click(function () {
-        username = $('#usernameJ').val();
-        roomName = $('#roomNameJ').val();
-        password = $('#passwordJ').val();
-        if ($('#spectateJ').is(":checked")) {
-            isSpectator = true;
-        }
-        var payload = JSON.stringify({
-            "type": 'joinRequest',
-            "roomName": roomName,
-            "password": password,
-            "username": username,
-            "language": languageIndex
-        })
-        if (username.length > 0 && roomName.length > 0) {
-            connection.send(payload);
-        }
-    });
-    $('#downloadBtn').click(function () {
-        var msgString = "";
-
-        for (let i = 0; i < messages.length; i++) {
-            if (messages[i].type === MSG_TYPE_SPEECH || messages[i].type === MSG_TYPE_CHAT) {
-                // let localTime=messages[i].timestamp + timeZoneOffset;
-                let d = new Date(messages[i].timestamp);
-                // timestamp
-                msgString += '[';
-                msgString += dateToString(d);
-                msgString += '] ';
-                // username
-                msgString += messages[i].username;
-                // language code
-                msgString += ' [';
-                msgString += languages[messages[i].sl].translateLangCode.toUpperCase();
-                msgString += ']: ';
-                // message
-                msgString += messages[i].message.replace(/\n/g, "");
-                msgString += '\r\n';
-            }
-        }
-
-        msgString = "data:text/plain;charset=UTF-8," + encodeURIComponent(msgString);
-        this.download = roomName + "_chat (LiveSubs).txt";
-        this.href = msgString;
-    });
-    $(".yt-button__text").on('DOMSubtreeModified', "mydiv", function () {
-        var lang = $(".yt-button__text").text();
-        if (lang.toLowerCase() !== languages[languageIndex]['translateLangCode']) {
-            protectTranslations = false;
-        } else {
-            protectTranslations = true;
-        }
-        console.log(lang, languages[languageIndex]['translateLangCode'], protectTranslations);
-    });
-    // $('#send').click(function () {
-    //     sendToAll(JSON.stringify({
-    //         "username": username,
-    //         "message": "I eat the fish",
-    //         "type": 1,//type 1: chat
-    //         "sl": languages[languageIndex]['translateLangCode'],
-    //         "timestamp": Date.now()
-    //     }));
-    //     messages.push({
-    //         "username": username,
-    //         "message": "No one's ever called me a bro before, the only people who've used that term with me are assailants.",
-    //         "type": 1,//type 1: chat
-    //         "sl": languages[languageIndex]['translateLangCode'],
-    //         "timestamp": Date.now()
-    //     })
-    //     updateChatMessages()
-    // })
-    // $("video").bind("ended", function() {
-    //     console.log('ended')
-    //  });
-
     function onDataReceived(data) {
         data = JSON.parse(data);
         if (data.type === MSG_TYPE_CHAT || data.type === MSG_TYPE_SPEECH) {
@@ -529,16 +516,17 @@ $(function () {
             messages.push(data);
             setSpotlight(data.username);
             updateChatMessages(true, false);
-            // translate(data.message,{from:data.sl,to:languages[languageIndex]['translateLangCode']}).then(res => {
-            //     data.message=res;
-            //     messages.push(data);
-            //     updateChatMessages();
-            //     console.log(data);
-            // })
-
         }
-        if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
+        else if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
             setSpotlight(data.username);
+        }else if(data.type===MSG_TYPE_CHAT_RESTORE){
+            messages = data.chat;
+            if(messages.length>=1)messages.push({
+                "message": "Successfully restored room's chat history.",
+                "type": MSG_TYPE_CHAT_RESTORE,
+                "timestamp": Date.now()
+            })
+            updateChatMessages(false, true);
         }
     }
 })
@@ -592,11 +580,7 @@ function sendToAll(data) {
         val['peer'].send(data);
     }
 }
-function sendToServer(data) {
-    data.roomName = roomName;
-    data.password = password;
-    connection.send(JSON.stringify(data));
-}
+
 function setSubtitleText(text) {
     let maxSubChars = languages[languageIndex].maxSubtitleChars;
     const subtitle = document.getElementById('subtitle');
@@ -691,6 +675,9 @@ function updateMessage(msgToUpdate, addToSub) {
         // Append leave message to chat.
         let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
+    }else if(msgToUpdate.type===MSG_TYPE_CHAT_RESTORE){
+        let messageHTML = "<p class='alertmsg'>" + msgToUpdate['message'] + "</p>";
+        $('.chatBox').html($('.chatBox').html() + messageHTML);
     }
 
     $('.chatBox').animate({
@@ -763,7 +750,7 @@ function transmitSpeech(message) {
     };
 
     // Send message to all peers.
-    sendToServer(msg);
+    // sendToServer(msg);
     sendToAll(JSON.stringify(msg))
 
     // Update our message list locally.
