@@ -62,9 +62,9 @@ app.use((req, res) => {
     }
 });
 
-app.listen(httpsPort, () => {
-    console.log('App listening to ' + httpsPort);
-});
+// app.listen(httpsPort, () => {
+//     console.log('App listening to ' + httpsPort);
+// });
 
 var httpServer = http.createServer(function (req, res) {
     console.log('requested http');
