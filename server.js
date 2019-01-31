@@ -67,7 +67,7 @@ var httpsServer = https.createServer(credentials, function (req, res) {
     //console.log('requested https')
     app(req, res);
 });
-httpsServer.listen(httpsPort);
+// httpsServer.listen(httpsPort);
 
 // Setup WebSocket server
 var wss = new WebSocket.Server({
