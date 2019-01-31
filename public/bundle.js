@@ -2872,6 +2872,13 @@ $(function () {
     // Setup some webpage extensions.
     $(".select2").select2();
     $('[data-toggle="tooltip"]').tooltip();
+
+    // Detect if browser is supported.
+    var userAgent = navigator.userAgent;
+    if (userAgent.indexOf("Chrome") == -1 || userAgent.indexOf("Android") > -1 || userAgent.indexOf("CriOS") > -1) {
+        alert("Unsupported browser detected. Please use a desktop version of Chrome for stable functionality.");
+    }
+
     var langDropdowns = [document.getElementById('langSelectC1'), document.getElementById('langSelectC2'), document.getElementById('langSelectJ')];
 
     // Populate language dropdowns.
@@ -2884,39 +2891,40 @@ $(function () {
             langDropdowns[i].add(option);
         }
     }
-    var userAgent = navigator.userAgent;
-    if (userAgent.indexOf("Chrome") == -1 || userAgent.indexOf("Android") > -1) {
-        alert("Unsupported browser detected. Please use a desktop version of Chrome.")
-    }
+
     // Register chat enter key callback.
-    $(document).keypress(function (event) {
+    $('#chatEnter').keydown(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         const ENTER_KEY = 13;
 
         if (keycode === ENTER_KEY) {
-            if ($('#chatEnter').is(":focus")) {
-                let msgText = $('#chatEnter').val();
-                $('#chatEnter').val("");
+            let msgText = $('#chatEnter').val();
 
-                let trimmedMsg = msgText.trim();
+            // Clear chat input.
+            $('#chatEnter').val("");
 
-                if (trimmedMsg.length == 0) {
-                    return; // don't send empty messages.
-                }
+            if (event.preventDefault)
+                event.preventDefault();
 
-                const msg = {
-                    "username": username,
-                    "message": msgText,
-                    "type": MSG_TYPE_CHAT,
-                    "sl": languageIndex,
-                    "timestamp": Date.now()
-                }
+            // Trim whitespace to prevent users from circumventing empty message check.
+            let trimmedMsg = msgText.trim();
 
-                messages.push(msg);
-                updateChatMessages(true, false);
-                // sendToServer(msg);
-                sendToAll(JSON.stringify(msg))
+            if (trimmedMsg.length == 0) {
+                return; // don't send empty messages.
             }
+
+            const msg = {
+                "username": username,
+                "message": msgText,
+                "type": MSG_TYPE_CHAT,
+                "sl": languageIndex,
+                "timestamp": Date.now()
+            }
+
+            messages.push(msg);
+            updateChatMessages(true, false);
+            // sendToServer(msg);
+            sendToAll(JSON.stringify(msg))
         }
     });
 
@@ -2930,6 +2938,7 @@ $(function () {
     })
 
     $('.login-ui').hide();
+    $('.chatBoxParent').hide();
 
     // Callbacks: Show login menus and hide buttons.
     $('#createRoom').click(function () {
@@ -3090,13 +3099,22 @@ $(function () {
         }
         console.log(lang, languages[languageIndex]['translateLangCode'], protectTranslations);
     });
+
+    // Hide mute switch until webcam is visible.
     $('#muteSwitch').hide();
 
-    // Some sort of thing.
     navigator.mediaDevices.getUserMedia(videoOptions).then(function (stream) {
-        gotMedia(stream);
+        // Setup local webcam.
+        var video = document.getElementById('self');
+        video.srcObject = stream;
+        video.play();
+
+        $('#muteSwitch').show(); // Show mute button.
+        startConnection(stream);
+
+        // userInstance=new Peer({initiator: true,stream: stream})
     }).catch(function (err) {
-        // Start in spectator mode if we failed to get user media.
+        // Start in spectator mode if we failed to get local webcam
         startConnection(false);
         isSpectator = true;
         $('.spectate').hide();
@@ -3105,18 +3123,7 @@ $(function () {
 
     window.WebSocket = window.WebSocket || window.MozWebSocket;
 
-    function gotMedia(stream) {
-        var video = document.getElementById('self');
-        video.srcObject = stream;
-        // video.load();
-        video.play();
-        startConnection(stream);
-        // userInstance=new Peer({initiator: true,stream: stream})
-    }
-
     function startConnection(stream) {
-        // connection = new WebSocket('wss://localhost'); // local testing (chrome might complain about insecure connection)
-        // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
         connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
 
         connection.onopen = function () {
@@ -3135,7 +3142,6 @@ $(function () {
             if (data.type === 'roomCreation') {
                 if (data.success === CONNECT_JOINED || data.success === CONNECT_CREATED) {
                     // Created or joined the room
-
                     // Begin speech recognition.
                     beginSpeechRecognition();
 
@@ -3147,7 +3153,7 @@ $(function () {
                     let elHeight = $(window).height();
                     elHeight -= $('#topChat').height();
                     elHeight -= $('#chatEnter').height();
-                    elHeight -= 30; // padding.
+                    elHeight -= 42; // padding.
                     // $('.chatBox').css('bottom', ($('#chatEnter').height() + 10) + 'px');
                     $('.chatBox').height(elHeight);
 
@@ -3223,22 +3229,22 @@ $(function () {
             $('#muteSwitch').click(function () {
                 if (muted) {
                     muted = false;
-                    $('#muteSwitch').attr('src', 'https://i.imgur.com/qs6sclX.png'); // Unmuted icon.
                     stream.getAudioTracks()[0].enabled = true;
+                    $('#muteSwitch').attr('src', 'https://i.imgur.com/qs6sclX.png'); // Unmuted icon.
+
+                    // Update tooltip text.
+                    $('#muteSwitch').attr('data-original-title', 'Click to mute');
+                    $('#muteSwitch').tooltip('show');
                 }
                 else {
                     muted = true;
                     stream.getAudioTracks()[0].enabled = false;
                     $('#muteSwitch').attr('src', 'https://i.imgur.com/KOZH7m7.png'); // Muted icon.
-                }
-            });
 
-            // Autohide mute switch.
-            $('#selfContainer').mouseenter(function () {
-                $('#muteSwitch').show();
-            });
-            $('#selfContainer').mouseleave(function () {
-                $('#muteSwitch').hide(75);
+                    // Update tooltip text.
+                    $('#muteSwitch').attr('data-original-title', 'Click to unmute');
+                    $('#muteSwitch').tooltip('show');
+                }
             });
 
             var speechEvents = hark(stream, {});
@@ -3411,7 +3417,6 @@ function loadJsCssFiles(filename, filetype) {
 }
 
 function sendToAll(data) {
-    //send data as string buffer shit isn't really working .stringify if necessary
     console.log('Sending to peer instances:', peerInstances);
     for (var i in peerInstances) {
         var val = peerInstances[i];
