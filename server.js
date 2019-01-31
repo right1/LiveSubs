@@ -7,16 +7,17 @@ const https = require('https');
 const express = require('express');
 const fs = require('fs');
 const httpPort = process.env.PORT || 80;
-const httpsPort = process.env.PORT || 443;
-const googlePort = 8080;
+// const httpsPort = 443;
 const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
 const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
-let privateKey = fs.readFileSync('credentials_testing/key.pem');
-let certificate = fs.readFileSync('credentials_testing/cert.pem');
-var credentials = { key: privateKey, cert: certificate };
+
+// Only useful when self-hosting.
+// let privateKey = fs.readFileSync('credentials_testing/key.pem');
+// let certificate = fs.readFileSync('credentials_testing/cert.pem');
+// var credentials = { key: privateKey, cert: certificate };
 
 const app = express();
 
@@ -29,7 +30,7 @@ app.use('/scripts', express.static(`${__dirname}/node_modules/`));
 app.use((req, res) => {
     if (req.secure) {
         if (req.url === "/") {
-            // Send webpage html
+            // Send webpage index HTML
             res.sendFile(`${__dirname}/public/index.html`);
         }
         else if (req.url === "/favicon.ico") {
@@ -44,28 +45,26 @@ app.use((req, res) => {
                 res.sendFile(fullPath);
             }
             else {
-                console.log('NOT SENDING ' + req.url);
+                // Print any files that weren't sent.
+                console.log(req.url + ' was not sent');
             }
         }
     }
     else {
-        console.log('redirecting to https://' + req.headers.host + req.url);
-        res.redirect('https://' + req.headers.host + req.url);
+        console.log('Client made a insecure request for: ' + req.url);
     }
 });
 
-// app.listen(httpsPort, () => {
-//     console.log('App listening to ' + httpsPort);
-// });
-
+// Heroku works with this and handles HTTPS redirection.
 var httpServer = http.createServer(function (req, res) {
     app(req, res);
 });
 httpServer.listen(httpPort);
 
-var httpsServer = https.createServer(credentials, function (req, res) {
-    app(req, res);
-});
+// Only useful when self-hosting, or using something other than Heroku.
+// var httpsServer = https.createServer(credentials, function (req, res) {
+//     app(req, res);
+// });
 // httpsServer.listen(httpsPort);
 
 // Setup WebSocket server
