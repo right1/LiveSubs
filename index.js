@@ -418,6 +418,7 @@ $(function () {
     }
 
     function peerSetup(p, init, otherUsername) {
+        let userActive=true;
         // newPeer.signal(signalData);
         p.on('data', onDataReceived)
         peerInstances[otherUsername] = {
@@ -486,11 +487,14 @@ $(function () {
             //remove the video
             userLeft();
             
+            
         });
         p.on('close',function(){
             userLeft();
         })
         function userLeft(){
+            if(!userActive)return;
+            userActive=false;
             $('#' + otherUsername + '_video').remove();
             if ($('#spotlight video').length == 0) {
                 console.log('need a new spotlight')
