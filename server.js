@@ -7,15 +7,14 @@ const https = require('https');
 const express = require('express');
 const fs = require('fs');
 const httpPort = process.env.PORT || 80;
-// const httpsPort = 443;
+const httpsPort = 443;
 const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
 
-// Only useful when self-hosting.
-// let privateKey = fs.readFileSync('credentials_testing/key.pem');
-// let certificate = fs.readFileSync('credentials_testing/cert.pem');
-// var credentials = { key: privateKey, cert: certificate };
+let privateKey = fs.readFileSync('credentials_testing/key.pem');
+let certificate = fs.readFileSync('credentials_testing/cert.pem');
+var credentials = { key: privateKey, cert: certificate };
 
 const app = express();
 
@@ -61,9 +60,9 @@ var httpServer = http.createServer(function (req, res) {
 httpServer.listen(httpPort);
 
 // Only useful when self-hosting, or using something other than Heroku.
-// var httpsServer = https.createServer(credentials, function (req, res) {
-//     app(req, res);
-// });
+var httpsServer = https.createServer(credentials, function (req, res) {
+    app(req, res);
+});
 // httpsServer.listen(httpsPort);
 
 // Setup WebSocket server
