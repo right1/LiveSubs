@@ -20,14 +20,6 @@ var credentials = { key: privateKey, cert: certificate };
 
 const app = express();
 
-var toWrite = 'const HEROKU_PORT = ' + httpsPort;
-fs.writeFile('public/heroku.js', toWrite, function (err) {
-    if(err) {
-        console.log('Could not write port to heroku.js');
-        console.log(err);
-    }
-});
-
 // Set 'public' folder as root
 app.use(express.static('public'));
 // Provide access to node_modules folder from the client-side

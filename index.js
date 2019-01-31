@@ -199,10 +199,9 @@ $(function () {
     }
 
     function startConnection(stream) {
-        // connection = new WebSocket('wss://localhost'); // local testing
+        // connection = new WebSocket('wss://localhost'); // local testing (chrome might complain about insecure connection)
         // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
-        // connection=new WebSocket('wss://livesubs.openode.io') //openode
-        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku
+        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
 
         // connection.onopen=function(){
         // }
