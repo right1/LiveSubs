@@ -202,8 +202,7 @@ $(function () {
         // connection = new WebSocket('wss://localhost'); // local testing
         // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
         // connection=new WebSocket('wss://livesubs.openode.io') //openode
-        console.log('websocket port ' + HEROKU_PORT);
-        connection = new WebSocket('wss://livesubs.herokuapp.com:' + HEROKU_PORT); // Heroku
+        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku
 
         // connection.onopen=function(){
         // }

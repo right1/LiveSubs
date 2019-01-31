@@ -67,13 +67,11 @@ app.use((req, res) => {
 // });
 
 var httpServer = http.createServer(function (req, res) {
-    console.log('requested http');
     app(req, res);
 });
 httpServer.listen(httpPort);
 
 var httpsServer = https.createServer(credentials, function (req, res) {
-    //console.log('requested https')
     app(req, res);
 });
 // httpsServer.listen(httpsPort);
