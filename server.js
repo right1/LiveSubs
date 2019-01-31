@@ -68,6 +68,7 @@ var httpsServer = https.createServer(credentials, function (req, res) {
     app(req, res);
 });
 httpsServer.listen(httpsPort);
+console.log('heroku port: ' + httpsPort);
 
 // Setup WebSocket server
 var wss = new WebSocket.Server({
