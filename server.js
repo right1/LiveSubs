@@ -7,7 +7,7 @@ const https = require('https');
 const express = require('express');
 const fs = require('fs');
 const httpPort = process.env.PORT || 80;
-const httpsPort = 443;
+const httpsPort = process.env.PORT || 443;
 const googlePort = 8080;
 const FAILED = 0;
 const JOINED = 1;
@@ -58,10 +58,10 @@ app.use((req, res) => {
 //     console.log('App listening to ' + googlePort);
 // });
 
-http.createServer(function (req, res) {
-    console.log('requested http');
-    app(req, res);
-}).listen(httpPort);
+// http.createServer(function (req, res) {
+//     console.log('requested http');
+//     app(req, res);
+// }).listen(httpPort);
 
 var httpsServer = https.createServer(credentials, function (req, res) {
     //console.log('requested https')
