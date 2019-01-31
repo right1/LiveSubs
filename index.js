@@ -48,7 +48,10 @@ $(function () {
             langDropdowns[i].add(option);
         }
     }
-
+    var userAgent=navigator.userAgent;
+    if(userAgent.indexOf("Chrome")==-1 || userAgent.indexOf("Android")>-1){
+        alert("Unsupported browser detected. Please use a desktop version of Chrome.")
+    }
     // Register chat enter key callback.
     $(document).keypress(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);

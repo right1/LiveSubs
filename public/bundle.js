@@ -2882,7 +2882,11 @@ $(function () {
             langDropdowns[i].add(option);
         }
     }
-
+    var userAgent=navigator.userAgent;
+    console.log(userAgent);
+    if(userAgent.indexOf("Chrome")==-1 || userAgent.indexOf("Android")>-1){
+        alert("Unsupported browser detected. Please use desktop version of Chrome.")
+    }
     // Register chat enter key callback.
     $(document).keypress(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
@@ -3033,10 +3037,9 @@ $(function () {
     }
 
     function startConnection(stream) {
-        // connection = new WebSocket('wss://localhost'); // local testing
+        // connection = new WebSocket('wss://localhost'); // local testing (chrome might complain about insecure connection)
         // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
-        // connection=new WebSocket('wss://livesubs.openode.io') //openode
-        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku
+        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
 
         // connection.onopen=function(){
         // }
