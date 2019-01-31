@@ -191,7 +191,7 @@ $(function () {
             isSpectator = true;
         }
         var payload = JSON.stringify({
-            "type": 'createRequest',
+            "type": 'createRoom',
             "roomName": roomName,
             "password": password,
             "username": username,
@@ -210,7 +210,7 @@ $(function () {
             isSpectator = true;
         }
         var payload = JSON.stringify({
-            "type": 'joinRequest',
+            "type": 'joinRoom',
             "roomName": roomName,
             "password": password,
             "username": username,
@@ -288,7 +288,6 @@ $(function () {
         connection.onopen = function () {
             // Keep connection alive by sending an empty string every 30 seconds.
             setInterval(() => {
-                console.log('Keeping websocket connection alive.');
                 connection.send('');
             }, 30000);
         }

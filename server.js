@@ -77,17 +77,20 @@ wss.on('connection', function connection(ws) {
     });
 });
 
-function receivedData(data_, connectionInstance) {
-    // Received request from client.
-    data_ = JSON.parse(data_);
+function receivedData(data, connectionInstance) {
+    if (data.length > 0) {
+        // Received an actual request from client.
+        data = JSON.parse(data);
 
-    if (data_.type === 'createRequest') {
-        createRoom(data_, connectionInstance);
-    } else if (data_.type === 'joinRequest') {
-        joinRoom(data_, connectionInstance);
-    }
-    else if (data_.type === 'peerId') {
-        handlePeer(data_);
+        if (data.type === 'createRoom') {
+            createRoom(data, connectionInstance);
+        }
+        else if (data.type === 'joinRoom') {
+            joinRoom(data, connectionInstance);
+        }
+        else if (data.type === 'peerId') {
+            handlePeer(data);
+        }
     }
 }
 
