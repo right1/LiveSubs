@@ -7,7 +7,7 @@ const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
 const MSG_TYPE_HARK = 4;
 const MSG_TYPE_USER_LEFT = 5;
-const MSG_TYPE_CHAT_RESTORE=6;
+const MSG_TYPE_CHAT_RESTORE = 6;
 const CONNECT_FAILED = 0;
 const CONNECT_JOINED = 1;
 const CONNECT_CREATED = 2;
@@ -18,7 +18,7 @@ const videoOptions = {
     video: true,
     audio: true
 };
-var roomCreator=false;
+var roomCreator = false;
 var messages = [];
 // import adapter from 'webrtc-adapter'
 var peerInstances = {}; //username: instance
@@ -38,6 +38,13 @@ $(function () {
     // Setup some webpage extensions.
     $(".select2").select2();
     $('[data-toggle="tooltip"]').tooltip();
+
+    // Detect if browser is supported.
+    var userAgent = navigator.userAgent;
+    if (userAgent.indexOf("Chrome") == -1 || userAgent.indexOf("Android") > -1 || userAgent.indexOf("CriOS") > -1) {
+        alert("Unsupported browser detected. Please use a desktop version of Chrome for stable functionality.");
+    }
+
     var langDropdowns = [document.getElementById('langSelectC1'), document.getElementById('langSelectC2'), document.getElementById('langSelectJ')];
 
     // Populate language dropdowns.
@@ -50,39 +57,40 @@ $(function () {
             langDropdowns[i].add(option);
         }
     }
-    var userAgent=navigator.userAgent;
-    if(userAgent.indexOf("Chrome")==-1 || userAgent.indexOf("Android")>-1){
-        alert("Unsupported browser detected. Please use a desktop version of Chrome.")
-    }
+
     // Register chat enter key callback.
-    $(document).keypress(function (event) {
+    $('#chatEnter').keydown(function (event) {
         var keycode = (event.keyCode ? event.keyCode : event.which);
         const ENTER_KEY = 13;
 
         if (keycode === ENTER_KEY) {
-            if ($('#chatEnter').is(":focus")) {
-                let msgText = $('#chatEnter').val();
-                $('#chatEnter').val("");
+            let msgText = $('#chatEnter').val();
 
-                let trimmedMsg = msgText.trim();
+            // Clear chat input.
+            $('#chatEnter').val("");
 
-                if (trimmedMsg.length == 0) {
-                    return; // don't send empty messages.
-                }
+            if (event.preventDefault)
+                event.preventDefault();
 
-                const msg = {
-                    "username": username,
-                    "message": msgText,
-                    "type": MSG_TYPE_CHAT,
-                    "sl": languageIndex,
-                    "timestamp": Date.now()
-                }
+            // Trim whitespace to prevent users from circumventing empty message check.
+            let trimmedMsg = msgText.trim();
 
-                messages.push(msg);
-                updateChatMessages(true, false);
-                // sendToServer(msg);
-                sendToAll(JSON.stringify(msg))
+            if (trimmedMsg.length == 0) {
+                return; // don't send empty messages.
             }
+
+            const msg = {
+                "username": username,
+                "message": msgText,
+                "type": MSG_TYPE_CHAT,
+                "sl": languageIndex,
+                "timestamp": Date.now()
+            }
+
+            messages.push(msg);
+            updateChatMessages(true, false);
+            // sendToServer(msg);
+            sendToAll(JSON.stringify(msg))
         }
     });
 
@@ -96,6 +104,7 @@ $(function () {
     })
 
     $('.login-ui').hide();
+    $('.chatBoxParent').hide();
 
     // Callbacks: Show login menus and hide buttons.
     $('#createRoom').click(function () {
@@ -191,7 +200,7 @@ $(function () {
             isSpectator = true;
         }
         var payload = JSON.stringify({
-            "type": 'createRequest',
+            "type": 'createRoom',
             "roomName": roomName,
             "password": password,
             "username": username,
@@ -210,7 +219,7 @@ $(function () {
             isSpectator = true;
         }
         var payload = JSON.stringify({
-            "type": 'joinRequest',
+            "type": 'joinRoom',
             "roomName": roomName,
             "password": password,
             "username": username,
@@ -256,13 +265,22 @@ $(function () {
         }
         console.log(lang, languages[languageIndex]['translateLangCode'], protectTranslations);
     });
+
+    // Hide mute switch until webcam is visible.
     $('#muteSwitch').hide();
 
-    // Some sort of thing.
     navigator.mediaDevices.getUserMedia(videoOptions).then(function (stream) {
-        gotMedia(stream);
+        // Setup local webcam.
+        var video = document.getElementById('self');
+        video.srcObject = stream;
+        video.play();
+
+        $('#muteSwitch').show(); // Show mute button.
+        startConnection(stream);
+
+        // userInstance=new Peer({initiator: true,stream: stream})
     }).catch(function (err) {
-        // Start in spectator mode if we failed to get user media.
+        // Start in spectator mode if we failed to get local webcam
         startConnection(false);
         isSpectator = true;
         $('.spectate').hide();
@@ -271,33 +289,25 @@ $(function () {
 
     window.WebSocket = window.WebSocket || window.MozWebSocket;
 
-    function gotMedia(stream) {
-        var video = document.getElementById('self');
-        video.srcObject = stream;
-        // video.load();
-        video.play();
-        startConnection(stream);
-        // userInstance=new Peer({initiator: true,stream: stream})
-    }
-
     function startConnection(stream) {
-        // connection = new WebSocket('wss://localhost'); // local testing (chrome might complain about insecure connection)
-        // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
         connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
 
-        // connection.onopen=function(){
-        // }
-
+        connection.onopen = function () {
+            // Keep connection alive by sending an empty string every 30 seconds.
+            setInterval(() => {
+                connection.send('');
+            }, 30000);
+        }
         connection.onerror = function (error) {
             console.error(error)
         }
         connection.onmessage = function (message) {
-            var data = JSON.parse(message.data)
-            console.log(data)
+            var data = JSON.parse(message.data);
+            console.log(data);
+
             if (data.type === 'roomCreation') {
                 if (data.success === CONNECT_JOINED || data.success === CONNECT_CREATED) {
                     // Created or joined the room
-
                     // Begin speech recognition.
                     beginSpeechRecognition();
 
@@ -309,7 +319,7 @@ $(function () {
                     let elHeight = $(window).height();
                     elHeight -= $('#topChat').height();
                     elHeight -= $('#chatEnter').height();
-                    elHeight -= 30; // padding.
+                    elHeight -= 42; // padding.
                     // $('.chatBox').css('bottom', ($('#chatEnter').height() + 10) + 'px');
                     $('.chatBox').height(elHeight);
 
@@ -328,7 +338,7 @@ $(function () {
                 if (data.success === CONNECT_CREATED) {
                     // Created and joined the room.
                     // userInstance=new Peer({initiator: true,trickle:false,stream: stream})
-                    roomCreator=true;
+                    roomCreator = true;
                     loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
                 } else if (data.success === CONNECT_JOINED) {
@@ -385,22 +395,22 @@ $(function () {
             $('#muteSwitch').click(function () {
                 if (muted) {
                     muted = false;
-                    $('#muteSwitch').attr('src', 'https://i.imgur.com/qs6sclX.png'); // Unmuted icon.
                     stream.getAudioTracks()[0].enabled = true;
+                    $('#muteSwitch').attr('src', 'https://i.imgur.com/qs6sclX.png'); // Unmuted icon.
+
+                    // Update tooltip text.
+                    $('#muteSwitch').attr('data-original-title', 'Click to mute');
+                    $('#muteSwitch').tooltip('show');
                 }
                 else {
                     muted = true;
                     stream.getAudioTracks()[0].enabled = false;
                     $('#muteSwitch').attr('src', 'https://i.imgur.com/KOZH7m7.png'); // Muted icon.
-                }
-            });
 
-            // Autohide mute switch.
-            $('#selfContainer').mouseenter(function () {
-                $('#muteSwitch').show();
-            });
-            $('#selfContainer').mouseleave(function () {
-                $('#muteSwitch').hide(75);
+                    // Update tooltip text.
+                    $('#muteSwitch').attr('data-original-title', 'Click to unmute');
+                    $('#muteSwitch').tooltip('show');
+                }
             });
 
             var speechEvents = hark(stream, {});
@@ -440,9 +450,9 @@ $(function () {
         })
         p.on('connect', function (data) {
             // New user joined
-            let arrToSend=messages.filter(msg => msg.type ==MSG_TYPE_SPEECH || msg.type==MSG_TYPE_CHAT);
+            let arrToSend = messages.filter(msg => msg.type == MSG_TYPE_SPEECH || msg.type == MSG_TYPE_CHAT);
             //console.log(arrToSend);
-            if(roomCreator)p.send(JSON.stringify({
+            if (roomCreator) p.send(JSON.stringify({
                 "type": MSG_TYPE_CHAT_RESTORE,
                 "chat": arrToSend
             }))
@@ -486,10 +496,8 @@ $(function () {
         p.on('error', function (err) {
             //remove the video
             userLeft();
-            
-            
         });
-        p.on('close',function(){
+        p.on('close', function () {
             userLeft();
         })
         function userLeft(){
@@ -523,9 +531,9 @@ $(function () {
         }
         else if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
             setSpotlight(data.username);
-        }else if(data.type===MSG_TYPE_CHAT_RESTORE){
+        } else if (data.type === MSG_TYPE_CHAT_RESTORE) {
             messages = data.chat;
-            if(messages.length>=1)messages.push({
+            if (messages.length >= 1) messages.push({
                 "message": "Successfully restored room's chat history.",
                 "type": MSG_TYPE_CHAT_RESTORE,
                 "timestamp": Date.now()
@@ -577,7 +585,6 @@ function loadJsCssFiles(filename, filetype) {
 }
 
 function sendToAll(data) {
-    //send data as string buffer shit isn't really working .stringify if necessary
     console.log('Sending to peer instances:', peerInstances);
     for (var i in peerInstances) {
         var val = peerInstances[i];
@@ -679,7 +686,7 @@ function updateMessage(msgToUpdate, addToSub) {
         // Append leave message to chat.
         let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
-    }else if(msgToUpdate.type===MSG_TYPE_CHAT_RESTORE){
+    } else if (msgToUpdate.type === MSG_TYPE_CHAT_RESTORE) {
         let messageHTML = "<p class='alertmsg'>" + msgToUpdate['message'] + "</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     }

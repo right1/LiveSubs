@@ -7,13 +7,11 @@ const https = require('https');
 const express = require('express');
 const fs = require('fs');
 const httpPort = process.env.PORT || 80;
-const httpsPort = process.env.PORT || 443;
-const googlePort = 8080;
+const httpsPort = 443;
 const FAILED = 0;
 const JOINED = 1;
 const CREATED = 2;
-// const MSG_TYPE_CHAT = 2;
-// const MSG_TYPE_SPEECH = 3;
+
 let privateKey = fs.readFileSync('credentials_testing/key.pem');
 let certificate = fs.readFileSync('credentials_testing/cert.pem');
 var credentials = { key: privateKey, cert: certificate };
@@ -29,7 +27,7 @@ app.use('/scripts', express.static(`${__dirname}/node_modules/`));
 app.use((req, res) => {
     if (req.secure) {
         if (req.url === "/") {
-            // Send webpage html
+            // Send webpage index HTML
             res.sendFile(`${__dirname}/public/index.html`);
         }
         else if (req.url === "/favicon.ico") {
@@ -44,25 +42,23 @@ app.use((req, res) => {
                 res.sendFile(fullPath);
             }
             else {
-                console.log('NOT SENDING ' + req.url);
+                // Print any files that weren't sent.
+                console.log(req.url + ' was not sent');
             }
         }
     }
     else {
-        console.log('redirecting to https://' + req.headers.host + req.url);
-        res.redirect('https://' + req.headers.host + req.url);
+        console.log('Client made a insecure request for: ' + req.url);
     }
 });
 
-// app.listen(httpsPort, () => {
-//     console.log('App listening to ' + httpsPort);
-// });
-
+// Heroku works with this and handles HTTPS redirection.
 var httpServer = http.createServer(function (req, res) {
     app(req, res);
 });
 httpServer.listen(httpPort);
 
+// Only useful when self-hosting, or using something other than Heroku.
 var httpsServer = https.createServer(credentials, function (req, res) {
     app(req, res);
 });
@@ -79,17 +75,20 @@ wss.on('connection', function connection(ws) {
     });
 });
 
-function receivedData(data_, connectionInstance) {
-    // Received request from client.
-    data_ = JSON.parse(data_);
+function receivedData(data, connectionInstance) {
+    if (data.length > 0) {
+        // Received an actual request from client.
+        data = JSON.parse(data);
 
-    if (data_.type === 'createRequest') {
-        createRoom(data_, connectionInstance);
-    } else if (data_.type === 'joinRequest') {
-        joinRoom(data_, connectionInstance);
-    }
-    else if (data_.type === 'peerId') {
-        handlePeer(data_);
+        if (data.type === 'createRoom') {
+            createRoom(data, connectionInstance);
+        }
+        else if (data.type === 'joinRoom') {
+            joinRoom(data, connectionInstance);
+        }
+        else if (data.type === 'peerId') {
+            handlePeer(data);
+        }
     }
 }
 
@@ -124,12 +123,12 @@ function createRoom(data, connectionInstance) {
         return;
     }
 
-    connectionInstance.on('close', function(connection){
-        onClose(connection,data);
+    connectionInstance.on('close', function (connection) {
+        onClose(connection, data);
     })
 }
 function joinRoom(data, connectionInstance) {
-    
+
     if (!activeRooms[data.roomName]) {
         connectionInstance.send(JSON.stringify({
             "type": "roomCreation",
@@ -196,12 +195,12 @@ function joinRoom(data, connectionInstance) {
     }
     activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
     console.log(data.username + ' joined ' + data.roomName);
-    connectionInstance.on('close', function(connection){
-        onClose(connection,data);
+    connectionInstance.on('close', function (connection) {
+        onClose(connection, data);
     })
 
 }
-function onClose(connection,data){
+function onClose(connection, data) {
     delete activeRooms[data.roomName]['connections'][data.username];
 
     if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {

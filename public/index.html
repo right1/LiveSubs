@@ -201,13 +201,14 @@
     </div>
     <div id="selfContainer">
         <video id="self" class="userCamera" muted></video>
-        <a><img id="muteSwitch" class="muteSwitch" src="https://i.imgur.com/qs6sclX.png" alt="Toggle Mute"></a>
+        <a><img id="muteSwitch" class="muteSwitch" data-toggle="tooltip" data-placement="right" data-original-title="Click to mute"
+                style="display:none;" src="https://i.imgur.com/qs6sclX.png" alt="Toggle Mute"></a>
     </div>
 
     <div id="videoBar" class="videoBar">
     </div>
 
-    <div class="chatBoxParent" style="display:none">
+    <div class="chatBoxParent" style="display:none;">
         <div class="chatInner">
             <div id="topChat">
                 <h4 translate="no"><span id="roomDisplay"></span>
@@ -225,7 +226,7 @@
 
             </div>
             <div class="chatEnter">
-                <textarea class="chatEnterBox" type="text" rows="3" class="form-control" placeholder="Enter a message..."
+                <textarea class="chatEnterBox" type="text" maxlength="250" class="form-control" placeholder="Enter a message..."
                     id="chatEnter"></textarea>
             </div>
         </div>
@@ -243,8 +244,7 @@
                 </div>
                 <div class="modal-body">
                     <p translate="no"><strong>IMPORTANT:</strong> This will only change the display language, speech to
-                        text will still
-                        function in the language you chose upon joining the room.</p>
+                        text will still function in the language you chose upon joining the room.</p>
                     <!-- Yandex will get added here -->
                     <div id="ytWidget">Yandex widget will appear here once you join a room.</div>
 
