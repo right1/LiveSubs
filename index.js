@@ -7,7 +7,7 @@ const MSG_TYPE_CHAT = 2;
 const MSG_TYPE_SPEECH = 3;
 const MSG_TYPE_HARK = 4;
 const MSG_TYPE_USER_LEFT = 5;
-const MSG_TYPE_CHAT_RESTORE=6;
+const MSG_TYPE_CHAT_RESTORE = 6;
 const CONNECT_FAILED = 0;
 const CONNECT_JOINED = 1;
 const CONNECT_CREATED = 2;
@@ -18,7 +18,7 @@ const videoOptions = {
     video: true,
     audio: true
 };
-var roomCreator=false;
+var roomCreator = false;
 var messages = [];
 // import adapter from 'webrtc-adapter'
 var peerInstances = {}; //username: instance
@@ -50,8 +50,8 @@ $(function () {
             langDropdowns[i].add(option);
         }
     }
-    var userAgent=navigator.userAgent;
-    if(userAgent.indexOf("Chrome")==-1 || userAgent.indexOf("Android")>-1){
+    var userAgent = navigator.userAgent;
+    if (userAgent.indexOf("Chrome") == -1 || userAgent.indexOf("Android") > -1) {
         alert("Unsupported browser detected. Please use a desktop version of Chrome.")
     }
     // Register chat enter key callback.
@@ -285,15 +285,20 @@ $(function () {
         // connection = new WebSocket('wss://livesub-229106.appspot.com'); // google cloud
         connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
 
-        // connection.onopen=function(){
-        // }
-
+        connection.onopen = function () {
+            // Keep connection alive by sending an empty string every 30 seconds.
+            setInterval(() => {
+                console.log('Keeping websocket connection alive.');
+                connection.send('');
+            }, 30000);
+        }
         connection.onerror = function (error) {
             console.error(error)
         }
         connection.onmessage = function (message) {
-            var data = JSON.parse(message.data)
-            console.log(data)
+            var data = JSON.parse(message.data);
+            console.log(data);
+
             if (data.type === 'roomCreation') {
                 if (data.success === CONNECT_JOINED || data.success === CONNECT_CREATED) {
                     // Created or joined the room
@@ -328,7 +333,7 @@ $(function () {
                 if (data.success === CONNECT_CREATED) {
                     // Created and joined the room.
                     // userInstance=new Peer({initiator: true,trickle:false,stream: stream})
-                    roomCreator=true;
+                    roomCreator = true;
                     loadJsCssFiles("https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=" + languages[translateTo]['translateLangCode'] + "&widgetTheme=light&autoMode=true", "js")
                     $('.login-ui').hide();
                 } else if (data.success === CONNECT_JOINED) {
@@ -439,9 +444,9 @@ $(function () {
         })
         p.on('connect', function (data) {
             // New user joined
-            let arrToSend=messages.filter(msg => msg.type ==MSG_TYPE_SPEECH || msg.type==MSG_TYPE_CHAT);
+            let arrToSend = messages.filter(msg => msg.type == MSG_TYPE_SPEECH || msg.type == MSG_TYPE_CHAT);
             //console.log(arrToSend);
-            if(roomCreator)p.send(JSON.stringify({
+            if (roomCreator) p.send(JSON.stringify({
                 "type": MSG_TYPE_CHAT_RESTORE,
                 "chat": arrToSend
             }))
@@ -485,12 +490,12 @@ $(function () {
         p.on('error', function (err) {
             //remove the video
             userLeft();
-            
+
         });
-        p.on('close',function(){
+        p.on('close', function () {
             userLeft();
         })
-        function userLeft(){
+        function userLeft() {
             $('#' + otherUsername + '_video').remove();
             if ($('#spotlight video').length == 0) {
                 console.log('need a new spotlight')
@@ -519,9 +524,9 @@ $(function () {
         }
         else if (data.type === MSG_TYPE_HARK && !gracePeriod) { //hark
             setSpotlight(data.username);
-        }else if(data.type===MSG_TYPE_CHAT_RESTORE){
+        } else if (data.type === MSG_TYPE_CHAT_RESTORE) {
             messages = data.chat;
-            if(messages.length>=1)messages.push({
+            if (messages.length >= 1) messages.push({
                 "message": "Successfully restored room's chat history.",
                 "type": MSG_TYPE_CHAT_RESTORE,
                 "timestamp": Date.now()
@@ -675,7 +680,7 @@ function updateMessage(msgToUpdate, addToSub) {
         // Append leave message to chat.
         let messageHTML = "<p><span class='usernameDisplayJoin' translate='no'>" + msgToUpdate['username'] + "</span> left the room.</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
-    }else if(msgToUpdate.type===MSG_TYPE_CHAT_RESTORE){
+    } else if (msgToUpdate.type === MSG_TYPE_CHAT_RESTORE) {
         let messageHTML = "<p class='alertmsg'>" + msgToUpdate['message'] + "</p>";
         $('.chatBox').html($('.chatBox').html() + messageHTML);
     }

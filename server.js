@@ -49,6 +49,7 @@ app.use((req, res) => {
         }
     }
     else {
+        res.redirect()
         console.log('Client made a insecure request for: ' + req.url);
     }
 });
@@ -121,12 +122,12 @@ function createRoom(data, connectionInstance) {
         return;
     }
 
-    connectionInstance.on('close', function(connection){
-        onClose(connection,data);
+    connectionInstance.on('close', function (connection) {
+        onClose(connection, data);
     })
 }
 function joinRoom(data, connectionInstance) {
-    
+
     if (!activeRooms[data.roomName]) {
         connectionInstance.send(JSON.stringify({
             "type": "roomCreation",
@@ -193,12 +194,12 @@ function joinRoom(data, connectionInstance) {
     }
     activeRooms[data.roomName]['connections'][data.username] = connectionInstance;
     console.log(data.username + ' joined ' + data.roomName);
-    connectionInstance.on('close', function(connection){
-        onClose(connection,data);
+    connectionInstance.on('close', function (connection) {
+        onClose(connection, data);
     })
 
 }
-function onClose(connection,data){
+function onClose(connection, data) {
     delete activeRooms[data.roomName]['connections'][data.username];
 
     if (Object.keys(activeRooms[data.roomName]['connections']).length == 0) {
