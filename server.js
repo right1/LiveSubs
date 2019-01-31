@@ -54,9 +54,9 @@ app.use((req, res) => {
     }
 });
 
-// app.listen(googlePort, () => {
-//     console.log('App listening to ' + googlePort);
-// });
+app.listen(httpsPort, () => {
+    console.log('App listening to ' + httpsPort);
+});
 
 // http.createServer(function (req, res) {
 //     console.log('requested http');
@@ -68,7 +68,6 @@ var httpsServer = https.createServer(credentials, function (req, res) {
     app(req, res);
 });
 httpsServer.listen(httpsPort);
-console.log('heroku port: ' + httpsPort);
 
 // Setup WebSocket server
 var wss = new WebSocket.Server({
