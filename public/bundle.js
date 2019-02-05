@@ -3124,8 +3124,8 @@ $(function () {
     window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function startConnection(stream) {
-        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
-
+        //connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
+        connection = new WebSocket('wss://livesubs.openode.io'); //openode
         connection.onopen = function () {
             // Keep connection alive by sending an empty string every 30 seconds.
             setInterval(() => {
@@ -3464,7 +3464,7 @@ function setSubtitleText(text) {
     }
     // Automatically anchor subtitles to bottom of spotlight video.
     $('#subtitleParent').css("width", $('#spotlight video').width())
-    subParent.css('bottom', ($('#spotlight').height() - $('#spotlight video').height() + window.innerHeight * .035) + 'px');
+    subParent.css('bottom', ($('#spotlight').height() - $('#spotlight video').height() + window.innerHeight * .04) + 'px');
     $('#subtitleParent').css("width", $('#spotlight video').width())
 }
 
@@ -3763,8 +3763,8 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-}).call(this,{"isBuffer":require("../../../../../../AppData/Roaming/npm/node_modules/browserify/node_modules/is-buffer/index.js")})
-},{"../../../../../../AppData/Roaming/npm/node_modules/browserify/node_modules/is-buffer/index.js":6}],11:[function(require,module,exports){
+}).call(this,{"isBuffer":require("../../../../../../../AppData/Roaming/npm/node_modules/browserify/node_modules/is-buffer/index.js")})
+},{"../../../../../../../AppData/Roaming/npm/node_modules/browserify/node_modules/is-buffer/index.js":6}],11:[function(require,module,exports){
 (function (process){
 /* eslint-env browser */
 
