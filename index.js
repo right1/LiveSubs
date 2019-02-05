@@ -396,7 +396,7 @@ $(function () {
                 if (muted) {
                     muted = false;
                     stream.getAudioTracks()[0].enabled = true;
-                    $('#muteSwitch').attr('src', 'https://i.imgur.com/qs6sclX.png'); // Unmuted icon.
+                    $('#muteSwitch').attr('src', 'https://i.imgur.com/yQYx27r.png'); // Unmuted icon.
 
                     // Update tooltip text.
                     $('#muteSwitch').attr('data-original-title', 'Click to mute');
@@ -405,7 +405,7 @@ $(function () {
                 else {
                     muted = true;
                     stream.getAudioTracks()[0].enabled = false;
-                    $('#muteSwitch').attr('src', 'https://i.imgur.com/KOZH7m7.png'); // Muted icon.
+                    $('#muteSwitch').attr('src', 'https://i.imgur.com/pXYtbGZ.png'); // Muted icon.
 
                     // Update tooltip text.
                     $('#muteSwitch').attr('data-original-title', 'Click to unmute');
