@@ -290,8 +290,8 @@ $(function () {
     window.WebSocket = window.WebSocket || window.MozWebSocket;
 
     function startConnection(stream) {
-        //connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
-        connection = new WebSocket('wss://livesubs.openode.io'); //openode
+        connection = new WebSocket('wss://livesubs.herokuapp.com'); // Heroku app
+        //connection = new WebSocket('wss://livesubs.openode.io'); //openode
         connection.onopen = function () {
             // Keep connection alive by sending an empty string every 30 seconds.
             setInterval(() => {
